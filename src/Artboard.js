@@ -119,14 +119,44 @@ function getCoordinateInfo(element, roadInfo) {
       return road.numberOfForward + road.numberOfBackward;
     })
   );
-
-  const roadLength = x / 2;
-  let roadWidth = 40;
-  if (maxRoadWidth > 5) {
-    roadWidth = (2 / 3) * Math.max(x, y);
-  }
+  const windowBox = Math.min(x, y)
+  const roadLength = windowBox / 2;
+  const roadWidth = windowBox / (maxRoadWidth * 3);
 
   return { x, y, roadLength, roadWidth, maxRoadWidth };
+}
+
+function calculatePoints(roadInfo, coordInfo) {
+  /* coordinfo { x, y, roadLength, roadWidth, maxRoadWidth }; */
+  if (!coordInfo.roadLength && !coordInfo.roadWidth) {
+    return null;
+  }
+
+  for (const road of roadInfo) {
+    /* maxDistance = pixli od sredine do skrajnega cestišča */
+    const maxDistance =
+      ((road.numberOfForward + road.numberOfBackward - 1) *
+        coordInfo.roadWidth) /
+      2;
+
+    for (let i = 0; i < road.numberOfForward + road.numberOfBackward; i++) {
+      let firstPoint = sumVector(
+        /* sum vector pointing east to get left or right */
+        lenDeg(maxDistance - i * coordInfo.roadWidth, road.angle - 90),
+        /* and the vector, responsible for making the center */
+        lenDeg(coordInfo.maxRoadWidth * coordInfo.roadWidth, road.angle)
+      );
+
+      let lastPoint = lenDeg(coordInfo.roadLength, road.angle);
+
+      if (i >= road.numberOfBackward) {
+        road.forward.push({ first: firstPoint, last: lastPoint });
+      } else {
+        road.backward.push({ first: firstPoint, last: lastPoint });
+      }
+    }
+  }
+  return roadInfo;
 }
 
 function buildLanes(road, roads, side, layer, coordInfo) {
@@ -203,34 +233,4 @@ function buildRoad(points, roads, coordInfo) {
     buildLanes(road, roads, "backward", "asphalt", coordInfo);
     buildLanes(road, roads, "center", "center", coordInfo);
   }
-}
-
-function calculatePoints(roadInfo, coordInfo) {
-  /* return { x, y, roadLength, roadWidth, maxRoadWidth }; */
-  if (!coordInfo.roadLength && !coordInfo.roadWidth) {
-    return null;
-  }
-
-  for (const road of roadInfo) {
-    const maxDistance =
-      ((road.numberOfForward + road.numberOfBackward - 1) *
-        coordInfo.roadWidth) /
-      2;
-
-    for (let i = 0; i < road.numberOfForward + road.numberOfBackward; i++) {
-      let firstPoint = sumVector(
-        lenDeg(coordInfo.maxRoadWidth * coordInfo.roadWidth, road.angle),
-        lenDeg(maxDistance - i * coordInfo.roadWidth, road.angle - 90)
-      );
-
-      let lastPoint = lenDeg(coordInfo.roadLength, road.angle);
-
-      if (i >= road.numberOfBackward) {
-        road.forward.push({ first: firstPoint, last: lastPoint });
-      } else {
-        road.backward.push({ first: firstPoint, last: lastPoint });
-      }
-    }
-  }
-  return roadInfo;
 }
