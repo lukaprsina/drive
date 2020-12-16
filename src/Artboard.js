@@ -49,9 +49,10 @@ export default function Artboard(props) {
     <svg id="artboard" ref={artboardRef}>
       {roads ? roads.asphalt.elements.forward : null}
       {roads ? roads.asphalt.elements.backward : null}
-      {/* {roads ? roads.debug.elements.forward : null}
-      {roads ? roads.debug.elements.backward : null} */}
-      {roads ? roads.center : null}
+      {roads ? roads.debug.elements.forward : null}
+      {roads ? roads.debug.elements.backward : null}
+      {roads ? roads.center.element : null}
+      {roads ? roads.curb.element : null}
       {!roads ? <Typography>Loading</Typography> : null}
     </svg>
   );
@@ -132,41 +133,79 @@ function buildRoad(points, coordInfo) {
       elements: { forward: [], backward: [] },
       strings: { forward: [], backward: [] },
     },
+    center: { string: "" },
+    curb: { string: "M 0 0 " },
   };
 
   if (!(points && coordInfo)) {
     return null;
   }
 
-  let centerPoints = "";
-
   for (const [index, road] of points.entries()) {
     buildLanes(road, roads, "forward", "debug", coordInfo);
     buildLanes(road, roads, "backward", "debug", coordInfo);
     buildLanes(road, roads, "forward", "asphalt", coordInfo);
     buildLanes(road, roads, "backward", "asphalt", coordInfo);
-
-    let firstPoint = sumVector(
-      sumVector(road.backward[0].first, coordInfo),
-      lenDeg(coordInfo.roadWidth / 2, road.angle - 90)
-    );
-    let lastPoint = sumVector(
-      sumVector(road.forward[road.forward.length - 1].first, coordInfo),
-      lenDeg(coordInfo.roadWidth / 2, road.angle + 90)
-    );
-
-    if (index === 0) {
-      centerPoints += "M " + firstPoint.x + " " + firstPoint.y + " ";
-    }
-
-    centerPoints += "L " + firstPoint.x + " " + firstPoint.y + " ";
-
-    centerPoints += "L " + lastPoint.x + " " + lastPoint.y + " ";
+    buildSpecial(road, roads, "center", index, coordInfo);
+    buildSpecial(road, roads, "curb", index, coordInfo);
   }
-  /* centerPoints += "Z"; */
-
-  roads.center = <path d={centerPoints} className="forward-asphalt" />;
+  roads.center.element = (
+    <path d={roads.center.string} className="forward-asphalt" />
+  );
+  roads.curb.element = (
+    <path d={roads.curb.string} className="forward-debug" />
+  );
   return roads;
+}
+
+function buildSpecial(road, roads, side, index, coordInfo) {
+  switch (side) {
+    case "center":
+      let centerPoints = "";
+
+      let leftPoint = sumVector(
+        sumVector(road.backward[0].first, coordInfo),
+        lenDeg(coordInfo.roadWidth / 2, road.angle - 90)
+      );
+      let rightPoint = sumVector(
+        sumVector(road.forward[road.forward.length - 1].first, coordInfo),
+        lenDeg(coordInfo.roadWidth / 2, road.angle + 90)
+      );
+
+      if (index === 0) {
+        centerPoints += "M " + leftPoint.x + " " + leftPoint.y + " ";
+      }
+      centerPoints += "L " + leftPoint.x + " " + leftPoint.y + " ";
+      centerPoints += "L " + rightPoint.x + " " + rightPoint.y + " ";
+
+      roads.center.string += centerPoints;
+      break;
+
+    case "curb":
+      let curbPoints = "";
+
+      let firstPoint = sumVector(
+        sumVector(road.backward[0].first, coordInfo),
+        lenDeg(coordInfo.roadWidth / 2, road.angle - 90)
+      );
+      let lastPoint = sumVector(
+        sumVector(road.forward[road.forward.length - 1].first, coordInfo),
+        lenDeg(coordInfo.roadWidth / 2, road.angle + 90)
+      );
+
+      if (index === 0) {
+        curbPoints += "M " + firstPoint.x + " " + firstPoint.y + " ";
+      }
+      curbPoints += "L " + firstPoint.x + " " + firstPoint.y + " ";
+      curbPoints += "L " + lastPoint.x + " " + lastPoint.y + " ";
+
+      roads.curb.string += curbPoints;
+      break
+
+    default:
+      console.error("Wrong road layer");
+      break;
+  }
 }
 
 function buildLanes(road, roads, side, layer, coordInfo) {
@@ -202,12 +241,11 @@ function buildLanes(road, roads, side, layer, coordInfo) {
         lanes += "L " + lastPoint.x + " " + lastPoint.y + " ";
         lanes += "L " + across.x + " " + across.y + " ";
         lanes += "L " + back.x + " " + back.y + " ";
-        /* lanes += "Z"; */
 
-        roads[layer].strings[side].push(lanes);
+        roads.asphalt.strings[side].push(lanes);
       }
 
-      roads[layer].elements[side] = roads[layer].strings[
+      roads.asphalt.elements[side] = roads.asphalt.strings[
         side
       ].map((lane, index) => (
         <path d={lane} key={index} className={side + "-" + layer} />
@@ -222,10 +260,10 @@ function buildLanes(road, roads, side, layer, coordInfo) {
           x2: coordInfo.x + lane.last.x,
           y2: coordInfo.y + lane.last.y,
         };
-        roads[layer].strings[side].push(coords);
+        roads.debug.strings[side].push(coords);
       }
 
-      roads[layer].elements[side] = roads[layer].strings[
+      roads.debug.elements[side] = roads.debug.strings[
         side
       ].map((coords, index) => (
         <line

@@ -35,13 +35,13 @@ body {
 }
 
 .forward-asphalt {
-  fill: #282B2A;
-  stroke: #282B2A;
+  fill: #4d5250;
+  stroke: #4d5250;
   stroke-width: 2px;
 }
 
 .backward-asphalt {
-  fill: #282B2A;
-  stroke: #282B2A;
+  fill: #4d5250;
+  stroke: #4d5250;
   stroke-width: 2px;
 }
