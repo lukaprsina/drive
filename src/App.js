@@ -7,9 +7,39 @@ import Artboard from "./Artboard.js";
 
 
 export default function App() {
+  const roadInfo = [
+    {
+      numberOfForward: 1,
+      numberOfBackward: 1,
+      angle: 0,
+      forward: [],
+      backward: [],
+    },
+    {
+      numberOfForward: 1,
+      numberOfBackward: 1,
+      angle: 110,
+      forward: [],
+      backward: [],
+    },
+    {
+      numberOfForward: 2,
+      numberOfBackward: 2,
+      angle: 180,
+      forward: [],
+      backward: [],
+    },
+    {
+      numberOfForward: 1,
+      numberOfBackward: 1,
+      angle: 300,
+      forward: [],
+      backward: [],
+    },
+  ];
   return (
     <>
-      <Artboard />
+      <Artboard roadInfo={roadInfo}/>
       {/* <Solution />
       <Inventory /> */}
     </>
