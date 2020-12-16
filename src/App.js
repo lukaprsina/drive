@@ -11,30 +11,22 @@ export default function App() {
     {
       numberOfForward: 1,
       numberOfBackward: 1,
-      angle: 0,
-      forward: [],
-      backward: [],
+      angle: 10,
     },
     {
       numberOfForward: 1,
       numberOfBackward: 1,
       angle: 110,
-      forward: [],
-      backward: [],
     },
     {
       numberOfForward: 2,
       numberOfBackward: 2,
       angle: 180,
-      forward: [],
-      backward: [],
     },
     {
       numberOfForward: 1,
       numberOfBackward: 1,
       angle: 300,
-      forward: [],
-      backward: [],
     },
   ];
   return (

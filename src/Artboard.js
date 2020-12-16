@@ -1,72 +1,25 @@
+import { Typography } from "@material-ui/core";
 import React, { useState, useEffect, useRef } from "react";
 
 function lenDeg(d, angle) {
   const deg = (angle * Math.PI) / 180;
   const x = d * Math.cos(deg);
   const y = d * Math.sin(deg);
-  /* return { x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 }; */
   return { x, y };
 }
 
 function sumVector(a, b) {
   const x = a.x + b.x;
   const y = a.y + b.y;
-  /* return { x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 }; */
   return { x, y };
 }
 
 export default function Artboard(props) {
-  let roads = {
-    debug: {
-      elements: { forward: [], backward: [] },
-      strings: { forward: [], backward: [] },
-    },
-    asphalt: {
-      elements: { forward: [], backward: [] },
-      strings: { forward: [], backward: [] },
-    },
-  };
-
-  const [roadInfo, setRoadInfo] = useState(props.roadInfo);
-
-  console.log("new");
-  console.log(roadInfo);
-
-  /* const roadInfo = [
-    {
-      numberOfForward: 1,
-      numberOfBackward: 1,
-      angle: 0,
-      forward: [],
-      backward: [],
-    },
-    {
-      numberOfForward: 1,
-      numberOfBackward: 1,
-      angle: 110,
-      forward: [],
-      backward: [],
-    },
-    {
-      numberOfForward: 2,
-      numberOfBackward: 2,
-      angle: 180,
-      forward: [],
-      backward: [],
-    },
-    {
-      numberOfForward: 1,
-      numberOfBackward: 1,
-      angle: 300,
-      forward: [],
-      backward: [],
-    },
-  ]; */
-
   /* svg ref */
   const artboardRef = useRef();
 
-  /* rerender on every window change */
+  const roadInfo = props.roadInfo;
+
   const [coordInfo, setCoordInfo] = useState({});
 
   useEffect(() => {
@@ -84,23 +37,22 @@ export default function Artboard(props) {
     return () => {
       window.removeEventListener("resize", changeCoordInfo);
     };
-    // eslint-disable-next-line
-  }, [roadInfo]);
+  }, [artboardRef, roadInfo]);
 
   /* get a list of all the road points */
   const points = calculatePoints(roadInfo, coordInfo);
-  /* setCoordInfo(points); */
 
   /* create elements based on road points */
-  buildRoad(points, roads, coordInfo);
+  const roads = buildRoad(points, coordInfo);
 
   return (
     <svg id="artboard" ref={artboardRef}>
-      {roads.asphalt.elements.forward}
-      {roads.asphalt.elements.backward}
-      {roads.debug.elements.forward}
-      {roads.debug.elements.backward}
-      {roads.center}
+      {roads ? roads.asphalt.elements.forward : null}
+      {roads ? roads.asphalt.elements.backward : null}
+      {/* {roads ? roads.debug.elements.forward : null}
+      {roads ? roads.debug.elements.backward : null} */}
+      {roads ? roads.center : null}
+      {!roads ? <Typography>Loading</Typography> : null}
     </svg>
   );
 }
@@ -128,22 +80,29 @@ function getCoordinateInfo(element, roadInfo) {
 }
 
 function calculatePoints(roadInfo, coordInfo) {
+  const points = [];
   /* coordinfo { x, y, roadLength, roadWidth, maxRoadWidth }; */
-  if (!coordInfo.roadLength && !coordInfo.roadWidth) {
+  if (!(coordInfo && coordInfo.roadLength && coordInfo.roadWidth)) {
     return null;
   }
 
-  for (const road of roadInfo) {
+  for (let i = 0; i < roadInfo.length; i++) {
+    const road = roadInfo[i];
+
+    points[i] = { forward: [], backward: [], angle: road.angle };
+
     /* maxDistance = pixels from the center to the edge */
     const maxDistance =
       ((road.numberOfForward + road.numberOfBackward - 1) *
         coordInfo.roadWidth) /
       2;
 
-    for (let i = 0; i < road.numberOfForward + road.numberOfBackward; i++) {
+    const allLanes = road.numberOfForward + road.numberOfBackward;
+
+    for (let j = 0; j < allLanes; j++) {
       let firstPoint = sumVector(
         /* sum vector pointing east to get left or right */
-        lenDeg(maxDistance - i * coordInfo.roadWidth, road.angle - 90),
+        lenDeg(maxDistance - j * coordInfo.roadWidth, road.angle - 90),
         /* and the vector, responsible for making the center area */
         lenDeg(coordInfo.maxRoadWidth * coordInfo.roadWidth * 0.8, road.angle)
       );
@@ -153,14 +112,61 @@ function calculatePoints(roadInfo, coordInfo) {
         lenDeg(coordInfo.roadLength, road.angle)
       );
 
-      if (i >= road.numberOfBackward) {
-        road.forward.push({ first: firstPoint, last: lastPoint });
+      if (j >= road.numberOfBackward) {
+        points[i].forward.push({ first: firstPoint, last: lastPoint });
       } else {
-        road.backward.push({ first: firstPoint, last: lastPoint });
+        points[i].backward.push({ first: firstPoint, last: lastPoint });
       }
     }
   }
-  return roadInfo;
+  return points;
+}
+
+function buildRoad(points, coordInfo) {
+  const roads = {
+    debug: {
+      elements: { forward: [], backward: [] },
+      strings: { forward: [], backward: [] },
+    },
+    asphalt: {
+      elements: { forward: [], backward: [] },
+      strings: { forward: [], backward: [] },
+    },
+  };
+
+  if (!(points && coordInfo)) {
+    return null;
+  }
+
+  let centerPoints = "";
+
+  for (const [index, road] of points.entries()) {
+    buildLanes(road, roads, "forward", "debug", coordInfo);
+    buildLanes(road, roads, "backward", "debug", coordInfo);
+    buildLanes(road, roads, "forward", "asphalt", coordInfo);
+    buildLanes(road, roads, "backward", "asphalt", coordInfo);
+
+    let firstPoint = sumVector(
+      sumVector(road.backward[0].first, coordInfo),
+      lenDeg(coordInfo.roadWidth / 2, road.angle - 90)
+    );
+    let lastPoint = sumVector(
+      sumVector(road.forward[road.forward.length - 1].first, coordInfo),
+      lenDeg(coordInfo.roadWidth / 2, road.angle + 90)
+    );
+
+    if (index === 0) {
+      centerPoints += "M " + firstPoint.x + " " + firstPoint.y + " ";
+    }
+
+    centerPoints += "L " + firstPoint.x + " " + firstPoint.y + " ";
+
+    centerPoints += "L " + lastPoint.x + " " + lastPoint.y + " ";
+  }
+  /* centerPoints += "Z"; */
+
+  roads.center = <path d={centerPoints} className="forward-asphalt" />;
+  return roads;
 }
 
 function buildLanes(road, roads, side, layer, coordInfo) {
@@ -210,7 +216,7 @@ function buildLanes(road, roads, side, layer, coordInfo) {
 
     case "debug":
       for (const lane of road[side]) {
-        let coords = {
+        const coords = {
           x1: coordInfo.x + lane.first.x,
           y1: coordInfo.y + lane.first.y,
           x2: coordInfo.x + lane.last.x,
@@ -236,39 +242,4 @@ function buildLanes(road, roads, side, layer, coordInfo) {
     default:
       console.error("Wrong road layer");
   }
-}
-
-function buildRoad(points, roads, coordInfo) {
-  if (!points) {
-    return null;
-  }
-
-  let centerPoints = "";
-
-  for (const [index, road] of points.entries()) {
-    buildLanes(road, roads, "forward", "debug", coordInfo);
-    buildLanes(road, roads, "backward", "debug", coordInfo);
-    buildLanes(road, roads, "forward", "asphalt", coordInfo);
-    buildLanes(road, roads, "backward", "asphalt", coordInfo);
-
-    const firstPoint = sumVector(
-      sumVector(road.backward[0].first, coordInfo),
-      lenDeg(coordInfo.roadWidth / 2, road.angle - 90)
-    );
-    const lastPoint = sumVector(
-      sumVector(road.forward[road.forward.length - 1].first, coordInfo),
-      lenDeg(coordInfo.roadWidth / 2, road.angle + 90)
-    );
-
-    if (index === 0) {
-      centerPoints += "M " + firstPoint.x + " " + firstPoint.y + " ";
-    }
-
-    centerPoints += "L " + firstPoint.x + " " + firstPoint.y + " ";
-
-    centerPoints += "L " + lastPoint.x + " " + lastPoint.y + " ";
-  }
-  /* centerPoints += "Z"; */
-
-  roads.center = <path d={centerPoints} className="forward-asphalt" />;
 }
