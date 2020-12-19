@@ -153,6 +153,14 @@ export function buildRoad(points, coordInfo) {
           coords: [vectors.roadBottomRight(road)],
         },
       ]);
+      if (index === points.length - 1) {
+        roads.curb.string += pointsToString([
+          {
+            letter: "L",
+            coords: [vectors.roadBottomLeft(points[0])],
+          },
+        ]);
+      }
 
       //----ASPHALT---- elements//
       roads.asphalt.elements[side] = roads.asphalt.strings[
