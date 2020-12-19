@@ -1,7 +1,30 @@
 import React from "react";
 import { sumVector, lenDeg } from "./Artboard";
 
+function pointsToString(pointsArray) {
+  if (!(pointsArray && pointsArray.length)) {
+    return null;
+  }
+
+  let pathD = "";
+
+  for (const order of pointsArray) {
+    pathD += order.letter + " ";
+
+    if (order.coords) {
+      for (const coords of order.coords) {
+        pathD += coords.x + " " + coords.y + " ";
+      }
+    }
+  }
+  return pathD;
+}
+
 export function buildRoad(points, coordInfo) {
+  if (!(points && coordInfo)) {
+    return null;
+  }
+
   const roads = {
     debug: {
       elements: { forward: [], backward: [] },
@@ -11,124 +34,158 @@ export function buildRoad(points, coordInfo) {
       elements: { forward: [], backward: [] },
       strings: { forward: [], backward: [] },
     },
-    center: { string: "" },
-    curb: { string: "" },
+    center: {},
+    curb: {},
   };
 
-  if (!(points && coordInfo)) {
-    return null;
-  }
+  const vectors = {
+    offsetBottom: (lane) => sumVector(coordInfo, lane.first),
 
-  for (const [index, road] of points.entries()) {
-    let centerPoints = "";
-    let leftPoint = sumVector(
-      sumVector(road.backward[0].first, coordInfo),
-      lenDeg(coordInfo.roadWidth / 2, road.angle - 90)
-    );
-    let rightPoint = sumVector(
-      sumVector(road.forward[road.forward.length - 1].first, coordInfo),
-      lenDeg(coordInfo.roadWidth / 2, road.angle + 90)
-    );
+    offsetTop: (lane) => sumVector(coordInfo, lane.last),
 
-    if (index === 0) {
-      centerPoints += "M " + leftPoint.x + " " + leftPoint.y + " ";
-    }
-    centerPoints += "L " + leftPoint.x + " " + leftPoint.y + " ";
-    centerPoints += "L " + rightPoint.x + " " + rightPoint.y + " ";
+    halfRoadLeft: (road) => lenDeg(coordInfo.roadWidth / 2, road.angle - 90),
 
-    roads.center.string += centerPoints;
-  }
+    halfRoadRight: (road) => lenDeg(coordInfo.roadWidth / 2, road.angle + 90),
 
-  for (const [index, road] of points.entries()) {
-    let curbPoints = "";
+    laneBottomLeft: (lane, road) =>
+      sumVector(vectors.halfRoadLeft(road), vectors.offsetBottom(lane)),
 
-    let testPoint = sumVector(
-      sumVector(road.backward[0].first, coordInfo),
-      lenDeg(coordInfo.roadWidth / 2, road.angle - 90)
-    );
-    let mestPoint = sumVector(
-      sumVector(road.forward[road.forward.length - 1].first, coordInfo),
-      lenDeg(coordInfo.roadWidth / 2, road.angle + 90)
-    );
+    laneTopLeft: (lane, road) =>
+      sumVector(vectors.halfRoadLeft(road), vectors.offsetTop(lane)),
 
-    if (index === 0) {
-      curbPoints += "M " + testPoint.x + " " + testPoint.y + " ";
-    }
-    curbPoints += "L " + testPoint.x + " " + testPoint.y + " ";
-    curbPoints += "M " + mestPoint.x + " " + mestPoint.y + " ";
+    laneBottomRight: (lane, road) =>
+      sumVector(vectors.halfRoadRight(road), vectors.offsetBottom(lane)),
 
-    roads.curb.string += curbPoints;
-  }
+    laneTopRight: (lane, road) =>
+      sumVector(vectors.halfRoadRight(road), vectors.offsetTop(lane)),
+
+    roadBottomLeft: (road) =>
+      sumVector(
+        sumVector(road.backward[0].first, coordInfo),
+        vectors.halfRoadLeft(road)
+      ),
+
+    roadBottomRight: (road) =>
+      sumVector(
+        sumVector(road.forward[road.forward.length - 1].first, coordInfo),
+        vectors.halfRoadRight(road)
+      ),
+    roadTopLeft: (road) =>
+      sumVector(
+        sumVector(road.backward[0].last, coordInfo),
+        vectors.halfRoadLeft(road)
+      ),
+
+    roadTopRight: (road) =>
+      sumVector(
+        sumVector(road.forward[road.forward.length - 1].last, coordInfo),
+        vectors.halfRoadRight(road)
+      ),
+  };
   for (const side of ["forward", "backward"]) {
-    for (const road of points) {
+    // fill both sides of the object
+    for (const [index, road] of points.entries()) {
+      // for every road
+
       for (const lane of road[side]) {
-        let lanes = "";
+        // for every lane
 
-        const offset = sumVector(coordInfo, lane.first);
-
-        const firstPoint = sumVector(
-          lenDeg(coordInfo.roadWidth / 2, road.angle - 90),
-          offset
+        //----ASPHALT---- strings//
+        roads.asphalt.strings[side].push(
+          pointsToString([
+            { letter: "M", coords: [vectors.offsetBottom(lane)] },
+            {
+              letter: "L",
+              coords: [
+                vectors.laneBottomLeft(lane, road),
+                vectors.laneTopLeft(lane, road),
+                vectors.laneTopRight(lane, road),
+                vectors.laneBottomRight(lane, road),
+              ],
+            },
+            { letter: "Z" },
+          ])
         );
 
-        const lastPoint = sumVector(
-          sumVector(coordInfo, lane.last),
-          lenDeg(coordInfo.roadWidth / 2, road.angle - 90)
-        );
-
-        const across = sumVector(
-          lenDeg(coordInfo.roadWidth, road.angle + 90),
-          lastPoint
-        );
-
-        const back = sumVector(
-          lenDeg(coordInfo.roadWidth / 2, road.angle + 90),
-          offset
-        );
-
-        lanes += "M " + offset.x + " " + offset.y + " ";
-        lanes += "L " + firstPoint.x + " " + firstPoint.y + " ";
-        lanes += "L " + lastPoint.x + " " + lastPoint.y + " ";
-        lanes += "L " + across.x + " " + across.y + " ";
-        lanes += "L " + back.x + " " + back.y + " ";
-
-        roads.asphalt.strings[side].push(lanes);
+        //-----DEBUG----- strings//
+        roads.debug.strings[side].push([
+          vectors.offsetBottom(lane),
+          vectors.offsetTop(lane),
+        ]);
       }
 
-      roads.asphalt.elements[side] = roads.asphalt.strings[side].map((lane, index) => (
+      //-----CENTER---- strings//
+      if (index === 0) {
+        roads.center.string = pointsToString([
+          {
+            letter: "M",
+            coords: [vectors.roadBottomLeft(road)],
+          },
+        ]);
+      }
+      roads.center.string += pointsToString([
+        {
+          letter: "L",
+          coords: [vectors.roadBottomLeft(road), vectors.roadBottomRight(road)],
+        },
+      ]);
+
+      //-----CURB----- strings//
+      if (index === 0) {
+        roads.curb.string = pointsToString([
+          {
+            letter: "M",
+            coords: [vectors.roadBottomLeft(road)],
+          },
+        ]);
+      }
+      roads.curb.string += pointsToString([
+        {
+          letter: "L",
+          coords: [vectors.roadBottomLeft(road), vectors.roadTopLeft(road)],
+        },
+        {
+          letter: "M",
+          coords: [vectors.roadTopRight(road)],
+        },
+        {
+          letter: "L",
+          coords: [vectors.roadBottomRight(road)],
+        },
+      ]);
+
+      //----ASPHALT---- elements//
+      roads.asphalt.elements[side] = roads.asphalt.strings[
+        side
+      ].map((lane, index) => (
         <path d={lane} key={index} className={side + "-asphalt"} />
       ));
-    }
-  }
-  for (const side of ["forward", "backward"]) {
-    for (const road of points) {
-      for (const lane of road[side]) {
-        const coords = {
-          x1: coordInfo.x + lane.first.x,
-          y1: coordInfo.y + lane.first.y,
-          x2: coordInfo.x + lane.last.x,
-          y2: coordInfo.y + lane.last.y,
-        };
-        roads.debug.strings[side].push(coords);
-      }
 
-      roads.debug.elements[side] = roads.debug.strings[side].map((coords, index) => (
+      //-----DEBUG----- elements//
+      roads.debug.elements[side] = roads.debug.strings[
+        side
+      ].map((coords, index) => (
         <line
-          x1={coords.x1}
-          y1={coords.y1}
-          x2={coords.x2}
-          y2={coords.y2}
+          x1={coords[0].x}
+          y1={coords[0].y}
+          x2={coords[1].x}
+          y2={coords[1].y}
           key={index}
-          className={side + "-debug"} />
+          className={side + "-debug"}
+        />
       ));
     }
-
-    roads.center.element = (
-      <path d={roads.center.string} className="forward-asphalt" />
-    );
-    roads.curb.element = (
-      <path d={roads.curb.string} className="forward-debug" />
-    );
-    return roads;
   }
+
+  //-----CENTER---- elements//
+  roads.center.element = (
+    <path d={roads.center.string} className="forward-asphalt" />
+  );
+
+  //-----CURB----- elements//
+  roads.curb.element = (
+    <path d={roads.curb.string} className="forward-debug" />
+  );
+
+  return roads;
 }

@@ -37,11 +37,11 @@ body {
 .forward-asphalt {
   fill: #4d5250;
   stroke: #4d5250;
-  stroke-width: 2px;
+  stroke-width: 1px;
 }
 
 .backward-asphalt {
   fill: #4d5250;
   stroke: #4d5250;
-  stroke-width: 2px;
+  stroke-width: 1px;
 }
