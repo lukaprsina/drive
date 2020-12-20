@@ -10,10 +10,10 @@ export default function App() {
   const roadInfo = [
     {
       numberOfForward: 1,
-      numberOfBackward: 1,
+      numberOfBackward: 2,
       angle: 10,
     },
-    {
+   {
       numberOfForward: 1,
       numberOfBackward: 1,
       angle: 110,

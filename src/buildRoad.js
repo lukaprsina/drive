@@ -34,7 +34,10 @@ export function buildRoad(points, coordInfo) {
       elements: { forward: [], backward: [] },
       strings: { forward: [], backward: [] },
     },
-    line: { strings: [] },
+    line: {
+      elements: { striped: [], continous: [] },
+      strings: { striped: [], continous: [] },
+    },
     center: {},
     curb: {},
   };
@@ -118,10 +121,17 @@ export function buildRoad(points, coordInfo) {
 
         //-----LINE------ strings//
         if (indexLane !== road[side].length - 1 || side === "backward") {
-          roads.line.strings.push([
-            vectors.laneBottomRight(lane, road),
-            vectors.laneTopRight(lane, road),
-          ]);
+          if (indexLane === road[side].length - 1 && side === "backward") {
+            roads.line.strings.continous.push([
+              vectors.laneBottomRight(lane, road),
+              vectors.laneTopRight(lane, road),
+            ]);
+          } else {
+            roads.line.strings.striped.push([
+              vectors.laneBottomRight(lane, road),
+              vectors.laneTopRight(lane, road),
+            ]);
+          }
         }
       }
 
@@ -195,7 +205,7 @@ export function buildRoad(points, coordInfo) {
       ));
 
       //-----LINE------ elements//
-      roads.line.elements = roads.line.strings.map((coords, index) => (
+      roads.line.elements.striped = roads.line.strings.striped.map((coords, index) => (
         <line
           x1={coords[0].x}
           y1={coords[0].y}
@@ -203,19 +213,27 @@ export function buildRoad(points, coordInfo) {
           y2={coords[1].y}
           key={index}
           className={side + "-line"}
-          stroke-dasharray="30, 60"
+          strokeDasharray="30, 60"
+        />
+      ));
+      roads.line.elements.continous = roads.line.strings.continous.map((coords, index) => (
+        <line
+          x1={coords[0].x}
+          y1={coords[0].y}
+          x2={coords[1].x}
+          y2={coords[1].y}
+          key={index}
+          className={side + "-line"}
         />
       ));
     }
   }
 
   //-----CENTER---- elements//
-  roads.center.element = (
-    <path d={roads.center.string} className="center" />
-  );
+  roads.center.element = <path d={roads.center.string} className="center" />;
 
   //-----CURB----- elements//
-  roads.curb.element = <path d={roads.curb.string} className="curb"/>;
+  roads.curb.element = <path d={roads.curb.string} className="curb" />;
 
   return roads;
 }

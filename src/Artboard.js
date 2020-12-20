@@ -1,4 +1,3 @@
-import { Typography } from "@material-ui/core";
 import React, { useState, useEffect, useRef } from "react";
 import { buildRoad } from "./buildRoad";
 
@@ -54,8 +53,9 @@ export default function Artboard(props) {
       {roads ? roads.debug.elements.backward : null} */}
       {roads ? roads.center.element : null}
       {roads ? roads.curb.element : null}
-      {roads ? roads.line.elements : null}
-      {!roads ? <Typography>Loading</Typography> : null}
+      {roads ? roads.line.elements.continous : null}
+      {roads ? roads.line.elements.striped : null}
+      {!roads ? <text>Loading</text> : null}
     </svg>
   );
 }
