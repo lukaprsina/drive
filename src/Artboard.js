@@ -50,10 +50,11 @@ export default function Artboard(props) {
     <svg id="artboard" ref={artboardRef}>
       {roads ? roads.asphalt.elements.forward : null}
       {roads ? roads.asphalt.elements.backward : null}
-      {roads ? roads.debug.elements.forward : null}
-      {roads ? roads.debug.elements.backward : null}
+      {/* {roads ? roads.debug.elements.forward : null}
+      {roads ? roads.debug.elements.backward : null} */}
       {roads ? roads.center.element : null}
       {roads ? roads.curb.element : null}
+      {roads ? roads.line.elements : null}
       {!roads ? <Typography>Loading</Typography> : null}
     </svg>
   );

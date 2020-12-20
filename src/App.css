@@ -34,6 +34,18 @@ body {
   fill: none;
 }
 
+.curb {
+  stroke: #cfcfcf;
+  stroke-width: 4px;
+  fill: none;
+}
+
+.center {
+  fill: #4d5250;
+  stroke: #4d5250;
+  stroke-width: 2px;
+}
+
 .forward-asphalt {
   fill: #4d5250;
   stroke: #4d5250;
@@ -44,4 +56,16 @@ body {
   fill: #4d5250;
   stroke: #4d5250;
   stroke-width: 1px;
+}
+
+.forward-line {
+  fill: none;
+  stroke: white;
+  stroke-width: 2px;
+}
+
+.backward-line {
+  fill: none;
+  stroke: white;
+  stroke-width: 2px;
 }

@@ -34,6 +34,7 @@ export function buildRoad(points, coordInfo) {
       elements: { forward: [], backward: [] },
       strings: { forward: [], backward: [] },
     },
+    line: { strings: [] },
     center: {},
     curb: {},
   };
@@ -59,7 +60,9 @@ export function buildRoad(points, coordInfo) {
     laneTopRight: (lane, road) =>
       sumVector(vectors.halfRoadRight(road), vectors.offsetTop(lane)),
 
-    roadBottomLeft: (road) =>
+    roadBottomLeft: (
+      road //poglej kuk se to izrazi z 0 in length - 1
+    ) =>
       sumVector(
         sumVector(road.backward[0].first, coordInfo),
         vectors.halfRoadLeft(road)
@@ -84,10 +87,10 @@ export function buildRoad(points, coordInfo) {
   };
   for (const side of ["forward", "backward"]) {
     // fill both sides of the object
-    for (const [index, road] of points.entries()) {
+    for (const [indexRoad, road] of points.entries()) {
       // for every road
 
-      for (const lane of road[side]) {
+      for (const [indexLane, lane] of road[side].entries()) {
         // for every lane
 
         //----ASPHALT---- strings//
@@ -112,10 +115,18 @@ export function buildRoad(points, coordInfo) {
           vectors.offsetBottom(lane),
           vectors.offsetTop(lane),
         ]);
+
+        //-----LINE------ strings//
+        if (indexLane !== road[side].length - 1 || side === "backward") {
+          roads.line.strings.push([
+            vectors.laneBottomRight(lane, road),
+            vectors.laneTopRight(lane, road),
+          ]);
+        }
       }
 
       //-----CENTER---- strings//
-      if (index === 0) {
+      if (indexRoad === 0) {
         roads.center.string = pointsToString([
           {
             letter: "M",
@@ -131,7 +142,7 @@ export function buildRoad(points, coordInfo) {
       ]);
 
       //-----CURB----- strings//
-      if (index === 0) {
+      if (indexRoad === 0) {
         roads.curb.string = pointsToString([
           {
             letter: "M",
@@ -153,7 +164,7 @@ export function buildRoad(points, coordInfo) {
           coords: [vectors.roadBottomRight(road)],
         },
       ]);
-      if (index === points.length - 1) {
+      if (indexRoad === points.length - 1) {
         roads.curb.string += pointsToString([
           {
             letter: "L",
@@ -182,18 +193,29 @@ export function buildRoad(points, coordInfo) {
           className={side + "-debug"}
         />
       ));
+
+      //-----LINE------ elements//
+      roads.line.elements = roads.line.strings.map((coords, index) => (
+        <line
+          x1={coords[0].x}
+          y1={coords[0].y}
+          x2={coords[1].x}
+          y2={coords[1].y}
+          key={index}
+          className={side + "-line"}
+          stroke-dasharray="30, 60"
+        />
+      ));
     }
   }
 
   //-----CENTER---- elements//
   roads.center.element = (
-    <path d={roads.center.string} className="forward-asphalt" />
+    <path d={roads.center.string} className="center" />
   );
 
   //-----CURB----- elements//
-  roads.curb.element = (
-    <path d={roads.curb.string} className="forward-debug" />
-  );
+  roads.curb.element = <path d={roads.curb.string} className="curb"/>;
 
   return roads;
 }
