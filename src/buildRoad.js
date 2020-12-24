@@ -20,7 +20,7 @@ function pointsToString(pointsArray) {
   return pathD;
 }
 
-export function buildRoad(points, coordInfo) {
+export function buildRoad(points, coordInfo, rotate) {
   if (!(points && coordInfo)) {
     return null;
   }
@@ -40,6 +40,7 @@ export function buildRoad(points, coordInfo) {
     },
     center: {},
     curb: {},
+    rotate: { elements: [], strings: [] },
   };
 
   const vectors = {
@@ -63,9 +64,7 @@ export function buildRoad(points, coordInfo) {
     laneTopRight: (lane, road) =>
       sumVector(vectors.halfRoadRight(road), vectors.offsetTop(lane)),
 
-    roadBottomLeft: (
-      road //poglej kuk se to izrazi z 0 in length - 1
-    ) =>
+    roadBottomLeft: (road) =>
       sumVector(
         sumVector(road.backward[0].first, coordInfo),
         vectors.halfRoadLeft(road)
@@ -86,6 +85,20 @@ export function buildRoad(points, coordInfo) {
       sumVector(
         sumVector(road.forward[road.forward.length - 1].last, coordInfo),
         vectors.halfRoadRight(road)
+      ),
+
+    roadTopMiddle: (road) =>
+      sumVector(
+        lenDeg(coordInfo.roadLength, road.angle),
+        sumVector(
+          lenDeg(
+            ((road.numberOfForward + road.numberOfBackward) *
+              coordInfo.roadWidth) /
+              2,
+            road.angle + 90
+          ),
+          vectors.roadBottomLeft(road)
+        )
       ),
   };
   for (const side of ["forward", "backward"]) {
@@ -135,6 +148,21 @@ export function buildRoad(points, coordInfo) {
         }
       }
 
+      //-----ROTATE---- strings//
+      if (side === "backward") {
+        roads.rotate.strings.push(vectors.roadTopMiddle(road));
+        roads.rotate.elements = roads.rotate.strings.map((coords, index) => (
+          <circle
+            cx={coords.x}
+            cy={coords.y}
+            r="10"
+            key={index}
+            {...rotate(index)}
+            className="rotate"
+          />
+        ));
+      }
+
       //-----CENTER---- strings//
       if (indexRoad === 0) {
         roads.center.string = pointsToString([
@@ -150,6 +178,8 @@ export function buildRoad(points, coordInfo) {
           coords: [vectors.roadBottomLeft(road), vectors.roadBottomRight(road)],
         },
       ]);
+
+      roads.coordInfo = <circle cx={coordInfo.x} cy={coordInfo.y} r="5" />;
 
       //-----CURB----- strings//
       if (indexRoad === 0) {
@@ -205,27 +235,31 @@ export function buildRoad(points, coordInfo) {
       ));
 
       //-----LINE------ elements//
-      roads.line.elements.striped = roads.line.strings.striped.map((coords, index) => (
-        <line
-          x1={coords[0].x}
-          y1={coords[0].y}
-          x2={coords[1].x}
-          y2={coords[1].y}
-          key={index}
-          className={side + "-line"}
-          strokeDasharray="30, 60"
-        />
-      ));
-      roads.line.elements.continous = roads.line.strings.continous.map((coords, index) => (
-        <line
-          x1={coords[0].x}
-          y1={coords[0].y}
-          x2={coords[1].x}
-          y2={coords[1].y}
-          key={index}
-          className={side + "-line"}
-        />
-      ));
+      roads.line.elements.striped = roads.line.strings.striped.map(
+        (coords, index) => (
+          <line
+            x1={coords[0].x}
+            y1={coords[0].y}
+            x2={coords[1].x}
+            y2={coords[1].y}
+            key={index}
+            className={side + "-line"}
+            strokeDasharray="30, 60"
+          />
+        )
+      );
+      roads.line.elements.continous = roads.line.strings.continous.map(
+        (coords, index) => (
+          <line
+            x1={coords[0].x}
+            y1={coords[0].y}
+            x2={coords[1].x}
+            y2={coords[1].y}
+            key={index}
+            className={side + "-line"}
+          />
+        )
+      );
     }
   }
 

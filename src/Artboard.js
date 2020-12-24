@@ -1,26 +1,52 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useGesture } from "react-use-gesture";
 import { buildRoad } from "./buildRoad";
-
-export function lenDeg(d, angle) {
-  const deg = (angle * Math.PI) / 180;
-  const x = d * Math.cos(deg);
-  const y = d * Math.sin(deg);
-  return { x, y };
-}
-
-export function sumVector(a, b) {
-  const x = a.x + b.x;
-  const y = a.y + b.y;
-  return { x, y };
-}
 
 export default function Artboard(props) {
   /* svg ref */
   const artboardRef = useRef();
 
-  const roadInfo = props.roadInfo;
-
   const [coordInfo, setCoordInfo] = useState({});
+
+  const [roadInfo, setRoadInfo] = useState([
+    {
+      numberOfBackward: 1,
+      numberOfForward: 2,
+      angle: 0,
+    },
+    {
+      numberOfBackward: 1,
+      numberOfForward: 1,
+      angle: 110,
+    },
+    {
+      numberOfBackward: 2,
+      numberOfForward: 3,
+      angle: 170,
+    },
+    {
+      numberOfBackward: 1,
+      numberOfForward: 1,
+      angle: 300,
+    },
+  ]);
+
+  const rotate = useGesture({
+    onDrag: ({ event, args: [index] }) => {
+      console.log("dragging!")
+      if (event.x && event.y) {
+        const newPoint = sumVector(event, multVector(coordInfo, -1));
+        const newAngle = Math.atan2(newPoint.y, newPoint.x);
+        const deg = newAngle * (180 / Math.PI);
+
+        // shallow copy
+        const newRoadInfo = roadInfo.map((a) => ({ ...a }));
+        newRoadInfo[index].angle = deg;
+
+        setRoadInfo(newRoadInfo);
+      }
+    },
+  });
 
   useEffect(() => {
     function changeCoordInfo() {
@@ -43,7 +69,7 @@ export default function Artboard(props) {
   const points = calculatePoints(roadInfo, coordInfo);
 
   /* create elements based on road points */
-  const roads = buildRoad(points, coordInfo);
+  const roads = buildRoad(points, coordInfo, rotate);
 
   return (
     <svg id="artboard" ref={artboardRef}>
@@ -55,36 +81,16 @@ export default function Artboard(props) {
       {roads ? roads.curb.element : null}
       {roads ? roads.line.elements.continous : null}
       {roads ? roads.line.elements.striped : null}
+      {roads ? roads.rotate.elements : null}
+      {roads ? roads.coordInfo : null}
       {!roads ? <text>Loading</text> : null}
     </svg>
   );
 }
 
-function getCoordinateInfo(element, roadInfo) {
-  if (!element.current) {
-    return null;
-  }
-
-  const clientRect = element.current.getBoundingClientRect();
-  const x = (clientRect.right - clientRect.left) / 2;
-  const y = (clientRect.bottom - clientRect.top) / 2;
-
-  const maxRoadWidth = Math.max.apply(
-    Math,
-    roadInfo.map((road) => {
-      return road.numberOfForward + road.numberOfBackward;
-    })
-  );
-  const windowBox = Math.min(x, y);
-  const roadLength = windowBox / 2;
-  const roadWidth = (windowBox / maxRoadWidth) * 0.5;
-
-  return { x, y, roadLength, roadWidth, maxRoadWidth };
-}
-
 function calculatePoints(roadInfo, coordInfo) {
   const points = [];
-  /* coordinfo { x, y, roadLength, roadWidth, maxRoadWidth }; */
+
   if (!(coordInfo && coordInfo.roadLength && coordInfo.roadWidth)) {
     return null;
   }
@@ -92,13 +98,19 @@ function calculatePoints(roadInfo, coordInfo) {
   for (let i = 0; i < roadInfo.length; i++) {
     const road = roadInfo[i];
 
-    points[i] = { forward: [], backward: [], angle: road.angle };
-
     /* maxDistance = pixels from the center to the edge */
     const maxDistance =
       ((road.numberOfForward + road.numberOfBackward - 1) *
         coordInfo.roadWidth) /
       2;
+    points[i] = {
+      forward: [],
+      backward: [],
+      maxDistance,
+      angle: road.angle,
+      numberOfForward: road.numberOfForward,
+      numberOfBackward: road.numberOfBackward,
+    };
 
     const allLanes = road.numberOfForward + road.numberOfBackward;
 
@@ -115,7 +127,7 @@ function calculatePoints(roadInfo, coordInfo) {
         lenDeg(coordInfo.roadLength, road.angle)
       );
 
-      if (j >= road.numberOfBackward) {
+      if (j >= road.numberOfForward) {
         points[i].forward.push({ first: firstPoint, last: lastPoint });
       } else {
         points[i].backward.push({ first: firstPoint, last: lastPoint });
@@ -123,4 +135,45 @@ function calculatePoints(roadInfo, coordInfo) {
     }
   }
   return points;
+}
+
+export function lenDeg(d, angle) {
+  const deg = (angle * Math.PI) / 180;
+  const x = d * Math.cos(deg);
+  const y = d * Math.sin(deg);
+  return { x, y };
+}
+
+export function sumVector(a, b) {
+  const x = a.x + b.x;
+  const y = a.y + b.y;
+  return { x, y };
+}
+
+function multVector(a, k) {
+  const x = a.x * k;
+  const y = a.y * k;
+  return { x, y };
+}
+
+export function getCoordinateInfo(element, roadInfo) {
+  if (!element.current) {
+    return null;
+  }
+
+  const clientRect = element.current.getBoundingClientRect();
+  const x = (clientRect.right - clientRect.left) / 2;
+  const y = (clientRect.bottom - clientRect.top) / 2;
+
+  const maxRoadWidth = Math.max.apply(
+    Math,
+    roadInfo.map((road) => {
+      return road.numberOfForward + road.numberOfBackward;
+    })
+  );
+  const windowBox = Math.min(x, y);
+  const roadLength = windowBox / 2;
+  const roadWidth = (windowBox / maxRoadWidth) * 0.4;
+
+  return { x, y, roadLength, roadWidth, maxRoadWidth };
 }
