@@ -2,10 +2,14 @@ import React from "react";
 import "./App.css";
 import Artboard from "./Artboard.js";
 
+/* import { Typography } from "@material-ui/core";
+import { useSpring, config, animated } from "react-spring";
+import { useGesture } from "react-use-gesture"; */
+
 export default function App() {
   return (
     <>
-      <Artboard />
+      {<Artboard />}
       {/* <Solution />
       <Inventory /> */}
     </>

@@ -32,8 +32,8 @@ export default function Artboard(props) {
   ]);
 
   const rotate = useGesture({
-    onDrag: ({ event, args: [index] }) => {
-      console.log("dragging!")
+    onMove: ({ event, args: [index], last }) => {
+      console.log(last)
       if (event.x && event.y) {
         const newPoint = sumVector(event, multVector(coordInfo, -1));
         const newAngle = Math.atan2(newPoint.y, newPoint.x);
