@@ -43,6 +43,12 @@ export function buildRoad(points, coordInfo, rotate) {
     rotate: { elements: [], strings: [] },
   };
 
+  const controls = {
+    rotate: { strings: [] },
+  };
+
+  const dragLibrary = [];
+
   const vectors = {
     offsetBottom: (lane) => sumVector(coordInfo, lane.first),
 
@@ -150,17 +156,8 @@ export function buildRoad(points, coordInfo, rotate) {
 
       //-----ROTATE---- strings//
       if (side === "backward") {
-        roads.rotate.strings.push(vectors.roadTopMiddle(road));
-        roads.rotate.elements = roads.rotate.strings.map((coords, index) => (
-          <circle
-            cx={coords.x}
-            cy={coords.y}
-            r="10"
-            key={index}
-            {...rotate(index)}
-            className="rotate"
-          />
-        ));
+        dragLibrary.push(rotate);
+        controls.rotate.strings.push(vectors.roadTopMiddle(road));
       }
 
       //-----CENTER---- strings//
@@ -268,6 +265,26 @@ export function buildRoad(points, coordInfo, rotate) {
 
   //-----CURB----- elements//
   roads.curb.element = <path d={roads.curb.string} className="curb" />;
+  /* console.log({roads, controls}) */
 
-  return roads;
+  //----ROTATE---- elements//
+  controls.rotate.elements = controls.rotate.strings.map((coords, index) => (
+    <div
+      style={{ left: coords.x, top: coords.y - 30 }}
+      className="rotate"
+      key={index}
+      {...dragLibrary[index](index)}
+    ></div>
+
+    /*     <circle
+      cx={coords.x}
+      cy={coords.y}
+      r="10"
+      className="rotate"
+      key={index}
+      {...rotate(index)}
+    /> */
+  ));
+
+  return [roads, controls];
 }

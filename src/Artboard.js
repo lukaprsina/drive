@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useGesture } from "react-use-gesture";
+import { useDrag } from "react-use-gesture";
 import { buildRoad } from "./buildRoad";
 
 export default function Artboard(props) {
@@ -31,21 +31,19 @@ export default function Artboard(props) {
     },
   ]);
 
-  const rotate = useGesture({
-    onMove: ({ event, args: [index], last }) => {
-      console.log(last)
-      if (event.x && event.y) {
-        const newPoint = sumVector(event, multVector(coordInfo, -1));
-        const newAngle = Math.atan2(newPoint.y, newPoint.x);
-        const deg = newAngle * (180 / Math.PI);
+  const rotate = useDrag(({ event, args: [index] }) => {
+    console.log("lol")
+    if (event.x && event.y) {
+      const newPoint = sumVector(event, multVector(coordInfo, -1));
+      const newAngle = Math.atan2(newPoint.y, newPoint.x);
+      const deg = newAngle * (180 / Math.PI);
 
-        // shallow copy
-        const newRoadInfo = roadInfo.map((a) => ({ ...a }));
-        newRoadInfo[index].angle = deg;
+      // shallow copy
+      const newRoadInfo = roadInfo.map((a) => ({ ...a }));
+      newRoadInfo[index].angle = deg;
 
-        setRoadInfo(newRoadInfo);
-      }
-    },
+      setRoadInfo(newRoadInfo);
+    }
   });
 
   useEffect(() => {
@@ -69,14 +67,15 @@ export default function Artboard(props) {
   const points = calculatePoints(roadInfo, coordInfo);
 
   /* create elements based on road points */
-  const roads = buildRoad(points, coordInfo, rotate);
+  const temp = buildRoad(points, coordInfo, rotate);
+  const [roads, controls] = temp ? temp : [null, null];
 
   return (
-    <svg id="artboard" ref={artboardRef}>
+    <>
+    <div className="test">{controls ? controls.rotate.elements : null}</div>
+    <svg className="artboard" ref={artboardRef}>
       {roads ? roads.asphalt.elements.forward : null}
       {roads ? roads.asphalt.elements.backward : null}
-      {/* {roads ? roads.debug.elements.forward : null}
-      {roads ? roads.debug.elements.backward : null} */}
       {roads ? roads.center.element : null}
       {roads ? roads.curb.element : null}
       {roads ? roads.line.elements.continous : null}
@@ -85,6 +84,7 @@ export default function Artboard(props) {
       {roads ? roads.coordInfo : null}
       {!roads ? <text>Loading</text> : null}
     </svg>
+    </>
   );
 }
 
