@@ -72,18 +72,7 @@ body {
 }
 
 .rotate {
-  /* fill: red;
-  touch-action: none; */
-  position: relative;
-  background-color: red;
-  width: 15px;
-  height: 15px;
-}
-
-.test {
-  width: 100vw;
-  height: 100vh;
-  position: fixed;
-  background-color: transparent;
+  fill: red;
+  touch-action: none;
 }
 

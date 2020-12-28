@@ -269,21 +269,14 @@ export function buildRoad(points, coordInfo, rotate) {
 
   //----ROTATE---- elements//
   controls.rotate.elements = controls.rotate.strings.map((coords, index) => (
-    <div
-      style={{ left: coords.x, top: coords.y - 30 }}
-      className="rotate"
-      key={index}
-      {...dragLibrary[index](index)}
-    ></div>
-
-    /*     <circle
+    <circle
       cx={coords.x}
       cy={coords.y}
       r="10"
       className="rotate"
       key={index}
-      {...rotate(index)}
-    /> */
+      {...dragLibrary[index](index)}
+    />
   ));
 
   return [roads, controls];

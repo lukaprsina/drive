@@ -32,15 +32,23 @@ export default function Artboard(props) {
   ]);
 
   const rotate = useDrag(({ event, args: [index] }) => {
-    console.log("lol")
     if (event.x && event.y) {
       const newPoint = sumVector(event, multVector(coordInfo, -1));
       const newAngle = Math.atan2(newPoint.y, newPoint.x);
-      const deg = newAngle * (180 / Math.PI);
+      let deg = newAngle * (180 / Math.PI);
+      deg %= 360;
+      if (deg < 0) {
+        deg += 360;
+      }
 
       // shallow copy
       const newRoadInfo = roadInfo.map((a) => ({ ...a }));
       newRoadInfo[index].angle = deg;
+
+      //ko sortiraš, jih drag zamenja
+      newRoadInfo.sort((a, b) => a.angle - b.angle)
+      newRoadInfo.forEach((a) => console.log(a.angle))
+      console.log("---------")
 
       setRoadInfo(newRoadInfo);
     }
@@ -71,8 +79,6 @@ export default function Artboard(props) {
   const [roads, controls] = temp ? temp : [null, null];
 
   return (
-    <>
-    <div className="test">{controls ? controls.rotate.elements : null}</div>
     <svg className="artboard" ref={artboardRef}>
       {roads ? roads.asphalt.elements.forward : null}
       {roads ? roads.asphalt.elements.backward : null}
@@ -82,9 +88,9 @@ export default function Artboard(props) {
       {roads ? roads.line.elements.striped : null}
       {roads ? roads.rotate.elements : null}
       {roads ? roads.coordInfo : null}
+      {controls ? controls.rotate.elements : null}
       {!roads ? <text>Loading</text> : null}
     </svg>
-    </>
   );
 }
 
