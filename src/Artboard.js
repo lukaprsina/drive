@@ -45,14 +45,15 @@ export default function Artboard(props) {
       const newRoadInfo = roadInfo.map((a) => ({ ...a }));
       newRoadInfo[index].angle = deg;
 
-      //ko sortiraš, jih drag zamenja
-      newRoadInfo.sort((a, b) => a.angle - b.angle)
-      newRoadInfo.forEach((a) => console.log(a.angle))
-      console.log("---------")
+      // newRoadInfo.sort((a, b) => a.angle - b.angle);
 
       setRoadInfo(newRoadInfo);
     }
   });
+  /* if dragging pikica:
+      objCoords = mouseCoords
+    else:
+      normalno naprej*/
 
   useEffect(() => {
     function changeCoordInfo() {
