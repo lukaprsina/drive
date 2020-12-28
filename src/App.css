@@ -76,3 +76,19 @@ body {
   touch-action: none;
 }
 
+.add-lane {
+  fill: blue;
+}
+
+/* .test {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+}
+
+.item {
+  width: 150px;
+  touch-action: none;
+  height: 100px;
+  background-color: rgba(197, 46, 202, 0.315);
+} */

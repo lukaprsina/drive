@@ -13,21 +13,25 @@ export default function Artboard(props) {
       numberOfBackward: 1,
       numberOfForward: 2,
       angle: 0,
+      index: 0,
     },
     {
       numberOfBackward: 1,
       numberOfForward: 1,
       angle: 110,
+      index: 1,
     },
     {
       numberOfBackward: 2,
       numberOfForward: 3,
       angle: 170,
+      index: 2,
     },
     {
       numberOfBackward: 1,
       numberOfForward: 1,
       angle: 300,
+      index: 3,
     },
   ]);
 
@@ -44,16 +48,28 @@ export default function Artboard(props) {
       // shallow copy
       const newRoadInfo = roadInfo.map((a) => ({ ...a }));
       newRoadInfo[index].angle = deg;
+      /* const originalIndex = newRoadInfo[index].index
 
-      // newRoadInfo.sort((a, b) => a.angle - b.angle);
+      newRoadInfo.sort((a, b) => a.angle - b.angle);
+      newRoadInfo.map((a) => console.log(a.angle))
+  
+      console.log(newRoadInfo) */
 
       setRoadInfo(newRoadInfo);
     }
   });
-  /* if dragging pikica:
-      objCoords = mouseCoords
-    else:
-      normalno naprej*/
+
+  function addLanes(index, side, add) {
+    const newRoadInfo = roadInfo.map((a) => ({ ...a }));
+
+    const numberOfLanes = newRoadInfo[index]["numberOf" + side];
+    
+    if (numberOfLanes > 1 || add > 0) {
+      newRoadInfo[index]["numberOf" + side] += add;
+    }
+
+    setRoadInfo(newRoadInfo);
+  }
 
   useEffect(() => {
     function changeCoordInfo() {
@@ -76,22 +92,32 @@ export default function Artboard(props) {
   const points = calculatePoints(roadInfo, coordInfo);
 
   /* create elements based on road points */
-  const temp = buildRoad(points, coordInfo, rotate);
+  const temp = buildRoad(points, coordInfo, rotate, addLanes);
   const [roads, controls] = temp ? temp : [null, null];
 
   return (
-    <svg className="artboard" ref={artboardRef}>
-      {roads ? roads.asphalt.elements.forward : null}
-      {roads ? roads.asphalt.elements.backward : null}
-      {roads ? roads.center.element : null}
-      {roads ? roads.curb.element : null}
-      {roads ? roads.line.elements.continous : null}
-      {roads ? roads.line.elements.striped : null}
-      {roads ? roads.rotate.elements : null}
-      {roads ? roads.coordInfo : null}
-      {controls ? controls.rotate.elements : null}
-      {!roads ? <text>Loading</text> : null}
-    </svg>
+    // touch-action ensures that chrome deosnt stop the drag after a few frames,
+    // but it doesn't work on svg elements
+    // https://stackoverflow.com/questions/45678190/dynamically-disabling-touch-action-overscroll-for-svg-elements
+    <div style={{ touchAction: "none" }}>
+      <svg className="artboard" ref={artboardRef}>
+        {roads ? roads.asphalt.elements.forward : null}
+        {roads ? roads.asphalt.elements.backward : null}
+        {roads ? roads.center.element : null}
+        {roads ? roads.curb.element : null}
+        {roads ? roads.line.elements.continous : null}
+        {roads ? roads.line.elements.striped : null}
+        {roads ? roads.coordInfo : null}
+
+        {controls ? controls.rotate.elements : null}
+        {controls ? controls.lanes.elements.forward.remove : null}
+        {controls ? controls.lanes.elements.forward.add : null}
+        {controls ? controls.lanes.elements.backward.remove : null}
+        {controls ? controls.lanes.elements.backward.add : null}
+
+        {!roads ? <text>Loading</text> : null}
+      </svg>
+    </div>
   );
 }
 
@@ -157,7 +183,7 @@ export function sumVector(a, b) {
   return { x, y };
 }
 
-function multVector(a, k) {
+export function multVector(a, k) {
   const x = a.x * k;
   const y = a.y * k;
   return { x, y };

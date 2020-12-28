@@ -1,5 +1,5 @@
 import React from "react";
-import { sumVector, lenDeg } from "./Artboard";
+import { sumVector, lenDeg, multVector } from "./Artboard";
 
 function pointsToString(pointsArray) {
   if (!(pointsArray && pointsArray.length)) {
@@ -20,7 +20,7 @@ function pointsToString(pointsArray) {
   return pathD;
 }
 
-export function buildRoad(points, coordInfo, rotate) {
+export function buildRoad(points, coordInfo, rotate, addLanes) {
   if (!(points && coordInfo)) {
     return null;
   }
@@ -40,14 +40,21 @@ export function buildRoad(points, coordInfo, rotate) {
     },
     center: {},
     curb: {},
-    rotate: { elements: [], strings: [] },
   };
 
   const controls = {
     rotate: { strings: [] },
+    lanes: {
+      strings: {
+        forward: { add: [], remove: [] },
+        backward: { add: [], remove: [] },
+      },
+      elements: {
+        forward: {},
+        backward: {},
+      },
+    },
   };
-
-  const dragLibrary = [];
 
   const vectors = {
     offsetBottom: (lane) => sumVector(coordInfo, lane.first),
@@ -156,7 +163,6 @@ export function buildRoad(points, coordInfo, rotate) {
 
       //-----ROTATE---- strings//
       if (side === "backward") {
-        dragLibrary.push(rotate);
         controls.rotate.strings.push(vectors.roadTopMiddle(road));
       }
 
@@ -257,6 +263,90 @@ export function buildRoad(points, coordInfo, rotate) {
           />
         )
       );
+
+      if (side === "backward") {
+        //-LANE CONTROL- strings//
+        controls.lanes.strings.forward.remove.push(
+          sumVector(
+            vectors.roadBottomLeft(road),
+            lenDeg(coordInfo.roadLength / 3, road.angle)
+          )
+        );
+
+        controls.lanes.strings.forward.add.push(
+          sumVector(
+            vectors.roadBottomLeft(road),
+            lenDeg((coordInfo.roadLength * 2) / 3, road.angle)
+          )
+        );
+
+        controls.lanes.strings.backward.remove.push(
+          sumVector(
+            vectors.roadBottomRight(road),
+            lenDeg(coordInfo.roadLength / 3, road.angle)
+          )
+        );
+
+        controls.lanes.strings.backward.add.push(
+          sumVector(
+            vectors.roadBottomRight(road),
+            lenDeg((coordInfo.roadLength * 2) / 3, road.angle)
+          )
+        );
+
+        //-LANE CONTROL- elements//
+        controls.lanes.elements.forward.remove = controls.lanes.strings.forward.remove.map(
+          (coords, index) => (
+            <circle
+              cx={coords.x}
+              cy={coords.y}
+              r="10"
+              className="add-lane"
+              key={index}
+              onClick={() => addLanes(index, "Forward", -1)}
+            />
+          )
+        );
+
+        controls.lanes.elements.forward.add = controls.lanes.strings.forward.add.map(
+          (coords, index) => (
+            <circle
+              cx={coords.x}
+              cy={coords.y}
+              r="10"
+              className="add-lane"
+              key={index}
+              onClick={() => addLanes(index, "Forward", 1)}
+            />
+          )
+        );
+
+        controls.lanes.elements.backward.remove = controls.lanes.strings.backward.remove.map(
+          (coords, index) => (
+            <circle
+              cx={coords.x}
+              cy={coords.y}
+              r="10"
+              className="add-lane"
+              key={index}
+              onClick={() => addLanes(index, "Backward", -1)}
+            />
+          )
+        );
+
+        controls.lanes.elements.backward.add = controls.lanes.strings.backward.add.map(
+          (coords, index) => (
+            <circle
+              cx={coords.x}
+              cy={coords.y}
+              r="10"
+              className="add-lane"
+              key={index}
+              onClick={() => addLanes(index, "Backward", 1)}
+            />
+          )
+        );
+      }
     }
   }
 
@@ -265,7 +355,6 @@ export function buildRoad(points, coordInfo, rotate) {
 
   //-----CURB----- elements//
   roads.curb.element = <path d={roads.curb.string} className="curb" />;
-  /* console.log({roads, controls}) */
 
   //----ROTATE---- elements//
   controls.rotate.elements = controls.rotate.strings.map((coords, index) => (
@@ -275,9 +364,11 @@ export function buildRoad(points, coordInfo, rotate) {
       r="10"
       className="rotate"
       key={index}
-      {...dragLibrary[index](index)}
+      {...rotate(index)}
     />
   ));
 
   return [roads, controls];
 }
+
+//problemi z keyi
