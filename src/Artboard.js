@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useDrag } from "react-use-gesture";
 import { buildRoad } from "./buildRoad";
 
-export default function Artboard(props) {
+export default function Artboard() {
   /* svg ref */
   const artboardRef = useRef();
 
@@ -109,7 +109,6 @@ export default function Artboard(props) {
         {roads ? roads.line.elements.continous : null}
         {roads ? roads.line.elements.striped : null}
         {/* {roads ? roads.coordInfo : null} */}
-
         {controls ? controls.rotate.elements : null}
         {controls ? controls.lanes.elements.forward.remove : null}
         {controls ? controls.lanes.elements.forward.add : null}
@@ -154,7 +153,7 @@ function calculatePoints(roadInfo, coordInfo) {
         /* sum vector pointing east to get left or right */
         lenDeg(maxDistance - j * coordInfo.roadWidth, road.angle - 90),
         /* and the vector, responsible for making the center area */
-        lenDeg(coordInfo.maxRoadWidth * coordInfo.roadWidth * 0.8, road.angle)
+        lenDeg(coordInfo.maxRoadWidth * coordInfo.roadWidth * 0.7, road.angle)
       );
 
       let lastPoint = sumVector(
@@ -208,7 +207,7 @@ export function getCoordinateInfo(element, roadInfo) {
   );
   const windowBox = Math.min(x, y);
   const roadLength = windowBox / 2;
-  const roadWidth = (windowBox / maxRoadWidth) * 0.6;
+  const roadWidth = (windowBox / maxRoadWidth) * 0.5;
 
   return { x, y, roadLength, roadWidth, maxRoadWidth };
 }

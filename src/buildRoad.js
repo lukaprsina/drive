@@ -1,5 +1,5 @@
 import React from "react";
-import { sumVector, lenDeg, multVector } from "./Artboard";
+import { sumVector, lenDeg } from "./Artboard";
 
 function pointsToString(pointsArray) {
   if (!(pointsArray && pointsArray.length)) {
