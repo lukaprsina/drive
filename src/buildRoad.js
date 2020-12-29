@@ -163,7 +163,10 @@ export function buildRoad(points, coordInfo, rotate, addLanes) {
 
       //-----ROTATE---- strings//
       if (side === "backward") {
-        controls.rotate.strings.push(vectors.roadTopMiddle(road));
+        controls.rotate.strings.push({
+          vectors: vectors.roadTopMiddle(road),
+          order: road.order,
+        });
       }
 
       //-----CENTER---- strings//
@@ -359,12 +362,12 @@ export function buildRoad(points, coordInfo, rotate, addLanes) {
   //----ROTATE---- elements//
   controls.rotate.elements = controls.rotate.strings.map((coords, index) => (
     <circle
-      cx={coords.x}
-      cy={coords.y}
+      cx={coords.vectors.x}
+      cy={coords.vectors.y}
       r="10"
       className="rotate"
       key={index}
-      {...rotate(index)}
+      {...rotate(coords.order)}
     />
   ));
 

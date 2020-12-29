@@ -13,32 +13,33 @@ export default function Artboard(props) {
       numberOfBackward: 1,
       numberOfForward: 2,
       angle: 0,
-      index: 0,
+      order: 0,
     },
     {
       numberOfBackward: 1,
       numberOfForward: 1,
       angle: 110,
-      index: 1,
+      order: 1,
     },
     {
       numberOfBackward: 2,
       numberOfForward: 3,
       angle: 170,
-      index: 2,
+      order: 2,
     },
     {
       numberOfBackward: 1,
       numberOfForward: 1,
       angle: 300,
-      index: 3,
+      order: 3,
     },
   ]);
 
-  const rotate = useDrag(({ event, args: [index] }) => {
+  const rotate = useDrag(({ event, args: [order] }) => {
     if (event.x && event.y) {
       const newPoint = sumVector(event, multVector(coordInfo, -1));
       const newAngle = Math.atan2(newPoint.y, newPoint.x);
+
       let deg = newAngle * (180 / Math.PI);
       deg %= 360;
       if (deg < 0) {
@@ -47,13 +48,13 @@ export default function Artboard(props) {
 
       // shallow copy
       const newRoadInfo = roadInfo.map((a) => ({ ...a }));
-      newRoadInfo[index].angle = deg;
-      /* const originalIndex = newRoadInfo[index].index
-
       newRoadInfo.sort((a, b) => a.angle - b.angle);
-      newRoadInfo.map((a) => console.log(a.angle))
-  
-      console.log(newRoadInfo) */
+
+      for (let i = 0; i < newRoadInfo.length; i++) {
+        if (order === newRoadInfo[i].order) {
+          newRoadInfo[i].angle = deg;
+        }
+      }
 
       setRoadInfo(newRoadInfo);
     }
@@ -63,7 +64,7 @@ export default function Artboard(props) {
     const newRoadInfo = roadInfo.map((a) => ({ ...a }));
 
     const numberOfLanes = newRoadInfo[index]["numberOf" + side];
-    
+
     if (numberOfLanes > 1 || add > 0) {
       newRoadInfo[index]["numberOf" + side] += add;
     }
@@ -96,7 +97,7 @@ export default function Artboard(props) {
   const [roads, controls] = temp ? temp : [null, null];
 
   return (
-    // touch-action ensures that chrome deosnt stop the drag after a few frames,
+    // touch-action ensures that chrome doesnt stop the drag after a few frames,
     // but it doesn't work on svg elements
     // https://stackoverflow.com/questions/45678190/dynamically-disabling-touch-action-overscroll-for-svg-elements
     <div style={{ touchAction: "none" }}>
@@ -107,7 +108,7 @@ export default function Artboard(props) {
         {roads ? roads.curb.element : null}
         {roads ? roads.line.elements.continous : null}
         {roads ? roads.line.elements.striped : null}
-        {roads ? roads.coordInfo : null}
+        {/* {roads ? roads.coordInfo : null} */}
 
         {controls ? controls.rotate.elements : null}
         {controls ? controls.lanes.elements.forward.remove : null}
@@ -141,6 +142,7 @@ function calculatePoints(roadInfo, coordInfo) {
       backward: [],
       maxDistance,
       angle: road.angle,
+      order: road.order,
       numberOfForward: road.numberOfForward,
       numberOfBackward: road.numberOfBackward,
     };
@@ -206,7 +208,7 @@ export function getCoordinateInfo(element, roadInfo) {
   );
   const windowBox = Math.min(x, y);
   const roadLength = windowBox / 2;
-  const roadWidth = (windowBox / maxRoadWidth) * 0.4;
+  const roadWidth = (windowBox / maxRoadWidth) * 0.6;
 
   return { x, y, roadLength, roadWidth, maxRoadWidth };
 }
