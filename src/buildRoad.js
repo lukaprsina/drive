@@ -223,7 +223,11 @@ export function buildRoad(points, coordInfo, rotate, addLanes) {
       roads.asphalt.elements[side] = roads.asphalt.strings[
         side
       ].map((lane, index) => (
-        <path d={lane} key={index} className={side + "-asphalt"} />
+        <path
+          d={lane}
+          key={index}
+          className={side + "-asphalt"}
+        />
       ));
 
       //-----DEBUG----- elements//
@@ -373,5 +377,3 @@ export function buildRoad(points, coordInfo, rotate, addLanes) {
 
   return [roads, controls];
 }
-
-//problemi z keyi

@@ -5,19 +5,6 @@ body {
   overflow: hidden;
 }
 
-.drag {
-  background: #91c9f9;
-  position: relative;
-  border-radius: 16px;
-  height: 120px;
-  width: 120px;
-  user-select: none;
-  touch-action: none;
-  font-size: 22px;
-  padding: 20px;
-  margin: 50px;
-}
-
 .artboard {
   width: 100vw;
   height: 100vh;
@@ -80,15 +67,30 @@ body {
   fill: blue;
 }
 
-/* .test {
+.inventory {
   width: 100vw;
   height: 100vh;
+  touch-action: none;
+  pointer-events: none;
   position: fixed;
 }
 
-.item {
-  width: 150px;
+.drag {
+  background: #91c9f9;
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 50px!important;
+  user-select: none;
   touch-action: none;
-  height: 100px;
-  background-color: rgba(197, 46, 202, 0.315);
-} */
+  pointer-events: all;
+}
+
+.sign {
+  pointer-events: all;
+  position: relative;
+  width: 80px;
+  height: 80px;
+  user-select: none;
+  touch-action: none;
+}
