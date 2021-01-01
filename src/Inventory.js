@@ -1,5 +1,5 @@
 import React from "react";
-import { useSpring, config, animated } from "react-spring";
+import { useSpring, animated } from "react-spring";
 import { useGesture } from "react-use-gesture";
 import { IconButton } from "@material-ui/core";
 
@@ -20,7 +20,6 @@ function Item(props) {
   const [{ x, y }, setSpring] = useSpring(() => ({
     x: 0,
     y: 0,
-    config: config.gentle,
   }));
 
   const bind = useGesture(
