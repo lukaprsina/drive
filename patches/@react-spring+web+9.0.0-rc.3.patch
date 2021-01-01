@@ -1,0 +1,14 @@
+diff --git a/node_modules/@react-spring/web/package.json b/node_modules/@react-spring/web/package.json
+old mode 100644
+new mode 100755
+index c779a5c..468557f
+--- a/node_modules/@react-spring/web/package.json
++++ b/node_modules/@react-spring/web/package.json
+@@ -69,7 +70,6 @@
+   "publishConfig": {
+     "access": "public"
+   },
+-  "sideEffects": false,
+   "types": "index.d.ts",
+   "version": "9.0.0-rc.3"
+ }

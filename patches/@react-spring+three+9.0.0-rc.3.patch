@@ -1,0 +1,14 @@
+diff --git a/node_modules/@react-spring/three/package.json b/node_modules/@react-spring/three/package.json
+old mode 100644
+new mode 100755
+index b007fc4..0019986
+--- a/node_modules/@react-spring/three/package.json
++++ b/node_modules/@react-spring/three/package.json
+@@ -70,7 +71,6 @@
+   "publishConfig": {
+     "access": "public"
+   },
+-  "sideEffects": false,
+   "types": "index.d.ts",
+   "version": "9.0.0-rc.3"
+ }

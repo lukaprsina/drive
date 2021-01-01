@@ -1,0 +1,13 @@
+diff --git a/node_modules/@react-spring/shared/package.json b/node_modules/@react-spring/shared/package.json
+old mode 100644
+new mode 100755
+index 46edb7b..a60c291
+--- a/node_modules/@react-spring/shared/package.json
++++ b/node_modules/@react-spring/shared/package.json
+@@ -51,6 +58,5 @@
+   "publishConfig": {
+     "access": "public"
+   },
+-  "sideEffects": false,
+   "version": "9.0.0-rc.3"
+ }
