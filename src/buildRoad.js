@@ -20,7 +20,7 @@ function pointsToString(pointsArray) {
   return pathD;
 }
 
-export function buildRoad(points, coordInfo, rotate, addLanes) {
+export function buildRoad(points, coordInfo, rotate, addLanes, drop) {
   if (!(points && coordInfo)) {
     return null;
   }
@@ -223,11 +223,7 @@ export function buildRoad(points, coordInfo, rotate, addLanes) {
       roads.asphalt.elements[side] = roads.asphalt.strings[
         side
       ].map((lane, index) => (
-        <path
-          d={lane}
-          key={index}
-          className={side + "-asphalt"}
-        />
+        <path ref={drop} d={lane} key={index} className={side + "-asphalt"} />
       ));
 
       //-----DEBUG----- elements//

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDrag } from "react-use-gesture";
+import { useDrop } from "react-dnd";
 import { buildRoad } from "./buildRoad";
 
 export default function Artboard() {
@@ -92,8 +93,16 @@ export default function Artboard() {
   /* get a list of all the road points */
   const points = calculatePoints(roadInfo, coordInfo);
 
+  const [collectedProps, drop] = useDrop({
+    accept: "sign",
+    drop: (item, monitor) => {
+      console.log(item, monitor, "from Artboard.")
+      return {name: "Artboard"}
+    }
+  });
+
   /* create elements based on road points */
-  const temp = buildRoad(points, coordInfo, rotate, addLanes);
+  const temp = buildRoad(points, coordInfo, rotate, addLanes, drop);
   const [roads, controls] = temp ? temp : [null, null];
 
   return (
