@@ -1,5 +1,6 @@
 import React from "react";
 import { IconButton } from "@material-ui/core";
+import { useDrag } from 'react-dnd'
 
 import forward from "./img/forward.svg";
 import give_way from "./img/give way.svg";
@@ -15,8 +16,12 @@ export function Inventory() {
 }
 
 function Item(props) {
+  const [collectedProps, drag] = useDrag({
+    item: { id, type }
+  })
+
   return (
-    <IconButton className="drag">
+    <IconButton className="drag" ref={drag}>
       <img src={props.src} className="sign" alt={props.src} draggable={false} />
     </IconButton>
   );
