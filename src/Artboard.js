@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDrag } from "react-use-gesture";
-import { useDrop } from "react-dnd";
-import { buildRoad } from "./buildRoad";
+import {
+  Asphalt,
+  Debug,
+  Line,
+  RotateControl,
+  LaneControl,
+  Center,
+  Curb,
+} from "./buildRoad";
 
 export default function Artboard() {
   /* svg ref */
@@ -36,7 +43,7 @@ export default function Artboard() {
     },
   ]);
 
-  const rotate = useDrag(({ event, args: [order] }) => {
+  const rotateBind = useDrag(({ event, args: [order] }) => {
     if (event.x && event.y) {
       const newPoint = sumVector(event, multVector(coordInfo, -1));
       const newAngle = Math.atan2(newPoint.y, newPoint.x);
@@ -93,38 +100,33 @@ export default function Artboard() {
   /* get a list of all the road points */
   const points = calculatePoints(roadInfo, coordInfo);
 
-  const [collectedProps, drop] = useDrop({
-    accept: "sign",
-    drop: (item, monitor) => {
-      console.log(item, monitor, "from Artboard.")
-      return {name: "Artboard"}
-    }
-  });
-
-  /* create elements based on road points */
-  const temp = buildRoad(points, coordInfo, rotate, addLanes, drop);
-  const [roads, controls] = temp ? temp : [null, null];
-
   return (
     // touch-action ensures that chrome doesnt stop the drag after a few frames,
     // but it doesn't work on svg elements
     // https://stackoverflow.com/questions/45678190/dynamically-disabling-touch-action-overscroll-for-svg-elements
+
     <div style={{ touchAction: "none" }}>
       <svg className="artboard" ref={artboardRef}>
-        {roads ? roads.asphalt.elements.forward : null}
-        {roads ? roads.asphalt.elements.backward : null}
-        {roads ? roads.center.element : null}
-        {roads ? roads.curb.element : null}
-        {roads ? roads.line.elements.continous : null}
-        {roads ? roads.line.elements.striped : null}
-        {/* {roads ? roads.coordInfo : null} */}
-        {controls ? controls.rotate.elements : null}
-        {controls ? controls.lanes.elements.forward.remove : null}
-        {controls ? controls.lanes.elements.forward.add : null}
-        {controls ? controls.lanes.elements.backward.remove : null}
-        {controls ? controls.lanes.elements.backward.add : null}
-
-        {!roads ? <text>Loading</text> : null}
+        <Asphalt
+          points={points}
+          coordInfo={coordInfo}
+          accept="sign"
+          /* onDrop={(item) => handleDrop(item)} */
+        />
+        <Center points={points} coordInfo={coordInfo} />
+        <Curb points={points} coordInfo={coordInfo} />
+        <Line points={points} coordInfo={coordInfo} />
+        {/* <Debug points={points} coordInfo={coordInfo} /> */}
+        <RotateControl
+          points={points}
+          coordInfo={coordInfo}
+          rotateBind={rotateBind}
+        />
+        <LaneControl
+          points={points}
+          coordInfo={coordInfo}
+          addLanes={addLanes}
+        />
       </svg>
     </div>
   );

@@ -1,7 +1,81 @@
 import React from "react";
+import { useDrop } from "react-dnd";
 import { sumVector, lenDeg } from "./Artboard";
 
-function pointsToString(pointsArray) {
+const vectors = {
+  offsetBottom: (lane, coordInfo) => sumVector(coordInfo, lane.first),
+
+  offsetTop: (lane, coordInfo) => sumVector(coordInfo, lane.last),
+
+  halfRoadLeft: (road, coordInfo) =>
+    lenDeg(coordInfo.roadWidth / 2, road.angle - 90),
+
+  halfRoadRight: (road, coordInfo) =>
+    lenDeg(coordInfo.roadWidth / 2, road.angle + 90),
+
+  laneBottomLeft: (lane, road, coordInfo) =>
+    sumVector(
+      vectors.halfRoadLeft(road, coordInfo),
+      vectors.offsetBottom(lane, coordInfo)
+    ),
+
+  laneTopLeft: (lane, road, coordInfo) =>
+    sumVector(
+      vectors.halfRoadLeft(road, coordInfo),
+      vectors.offsetTop(lane, coordInfo)
+    ),
+
+  laneBottomRight: (lane, road, coordInfo) =>
+    sumVector(
+      vectors.halfRoadRight(road, coordInfo),
+      vectors.offsetBottom(lane, coordInfo)
+    ),
+
+  laneTopRight: (lane, road, coordInfo) =>
+    sumVector(
+      vectors.halfRoadRight(road, coordInfo),
+      vectors.offsetTop(lane, coordInfo)
+    ),
+
+  roadBottomLeft: (road, coordInfo) =>
+    sumVector(
+      sumVector(road.backward[0].first, coordInfo),
+      vectors.halfRoadLeft(road, coordInfo)
+    ),
+
+  roadBottomRight: (road, coordInfo) =>
+    sumVector(
+      sumVector(road.forward[road.forward.length - 1].first, coordInfo),
+      vectors.halfRoadRight(road, coordInfo)
+    ),
+  roadTopLeft: (road, coordInfo) =>
+    sumVector(
+      sumVector(road.backward[0].last, coordInfo),
+      vectors.halfRoadLeft(road, coordInfo)
+    ),
+
+  roadTopRight: (road, coordInfo) =>
+    sumVector(
+      sumVector(road.forward[road.forward.length - 1].last, coordInfo),
+      vectors.halfRoadRight(road, coordInfo)
+    ),
+
+  roadTopMiddle: (road, coordInfo) =>
+    sumVector(
+      lenDeg(coordInfo.roadLength, road.angle),
+      sumVector(
+        lenDeg(
+          ((road.numberOfForward + road.numberOfBackward) *
+            coordInfo.roadWidth) /
+            2,
+          road.angle + 90
+        ),
+        vectors.roadBottomLeft(road, coordInfo)
+      )
+    ),
+};
+
+export function pointsToString(pointsArray) {
   if (!(pointsArray && pointsArray.length)) {
     return null;
   }
@@ -20,356 +94,366 @@ function pointsToString(pointsArray) {
   return pathD;
 }
 
-export function buildRoad(points, coordInfo, rotate, addLanes, drop) {
+export function Asphalt({ points, coordInfo, accept, onDrop }) {
+  const [collectedProps, dropBind] = useDrop({
+    accept,
+    drop: onDrop,
+  });
+
   if (!(points && coordInfo)) {
     return null;
   }
 
-  const roads = {
-    debug: {
-      elements: { forward: [], backward: [] },
-      strings: { forward: [], backward: [] },
-    },
-    asphalt: {
-      elements: { forward: [], backward: [] },
-      strings: { forward: [], backward: [] },
-    },
-    line: {
-      elements: { striped: [], continous: [] },
-      strings: { striped: [], continous: [] },
-    },
-    center: {},
-    curb: {},
+  const asphalt = {
+    strings: { forward: [], backward: [] },
+    elements: {},
   };
 
-  const controls = {
-    rotate: { strings: [] },
-    lanes: {
-      strings: {
-        forward: { add: [], remove: [] },
-        backward: { add: [], remove: [] },
-      },
-      elements: {
-        forward: {},
-        backward: {},
-      },
-    },
-  };
-
-  const vectors = {
-    offsetBottom: (lane) => sumVector(coordInfo, lane.first),
-
-    offsetTop: (lane) => sumVector(coordInfo, lane.last),
-
-    halfRoadLeft: (road) => lenDeg(coordInfo.roadWidth / 2, road.angle - 90),
-
-    halfRoadRight: (road) => lenDeg(coordInfo.roadWidth / 2, road.angle + 90),
-
-    laneBottomLeft: (lane, road) =>
-      sumVector(vectors.halfRoadLeft(road), vectors.offsetBottom(lane)),
-
-    laneTopLeft: (lane, road) =>
-      sumVector(vectors.halfRoadLeft(road), vectors.offsetTop(lane)),
-
-    laneBottomRight: (lane, road) =>
-      sumVector(vectors.halfRoadRight(road), vectors.offsetBottom(lane)),
-
-    laneTopRight: (lane, road) =>
-      sumVector(vectors.halfRoadRight(road), vectors.offsetTop(lane)),
-
-    roadBottomLeft: (road) =>
-      sumVector(
-        sumVector(road.backward[0].first, coordInfo),
-        vectors.halfRoadLeft(road)
-      ),
-
-    roadBottomRight: (road) =>
-      sumVector(
-        sumVector(road.forward[road.forward.length - 1].first, coordInfo),
-        vectors.halfRoadRight(road)
-      ),
-    roadTopLeft: (road) =>
-      sumVector(
-        sumVector(road.backward[0].last, coordInfo),
-        vectors.halfRoadLeft(road)
-      ),
-
-    roadTopRight: (road) =>
-      sumVector(
-        sumVector(road.forward[road.forward.length - 1].last, coordInfo),
-        vectors.halfRoadRight(road)
-      ),
-
-    roadTopMiddle: (road) =>
-      sumVector(
-        lenDeg(coordInfo.roadLength, road.angle),
-        sumVector(
-          lenDeg(
-            ((road.numberOfForward + road.numberOfBackward) *
-              coordInfo.roadWidth) /
-              2,
-            road.angle + 90
-          ),
-          vectors.roadBottomLeft(road)
-        )
-      ),
-  };
   for (const side of ["forward", "backward"]) {
-    // fill both sides of the object
-    for (const [indexRoad, road] of points.entries()) {
-      // for every road
-
-      for (const [indexLane, lane] of road[side].entries()) {
-        // for every lane
-
-        //----ASPHALT---- strings//
-        roads.asphalt.strings[side].push(
+    for (const road of points) {
+      for (const lane of road[side]) {
+        asphalt.strings[side].push(
           pointsToString([
-            { letter: "M", coords: [vectors.offsetBottom(lane)] },
+            { letter: "M", coords: [vectors.offsetBottom(lane, coordInfo)] },
             {
               letter: "L",
               coords: [
-                vectors.laneBottomLeft(lane, road),
-                vectors.laneTopLeft(lane, road),
-                vectors.laneTopRight(lane, road),
-                vectors.laneBottomRight(lane, road),
+                vectors.laneBottomLeft(lane, road, coordInfo),
+                vectors.laneTopLeft(lane, road, coordInfo),
+                vectors.laneTopRight(lane, road, coordInfo),
+                vectors.laneBottomRight(lane, road, coordInfo),
               ],
             },
             { letter: "Z" },
           ])
         );
+      }
+    }
 
-        //-----DEBUG----- strings//
-        roads.debug.strings[side].push([
-          vectors.offsetBottom(lane),
-          vectors.offsetTop(lane),
+    asphalt.elements[side] = asphalt.strings[side].map((lane, index) => (
+      <path ref={dropBind} d={lane} key={index} className={side + "-asphalt"} />
+    ));
+  }
+
+  return (
+    <g>
+      {asphalt.elements.forward}
+      {asphalt.elements.backward}
+    </g>
+  );
+}
+
+export function Debug({ points, coordInfo }) {
+  if (!(points && coordInfo)) {
+    return null;
+  }
+
+  const debug = {
+    strings: { forward: [], backward: [] },
+    elements: {},
+  };
+
+  for (const side of ["forward", "backward"]) {
+    for (const road of points) {
+      for (const lane of road[side]) {
+        debug.strings[side].push([
+          vectors.offsetBottom(lane, coordInfo),
+          vectors.offsetTop(lane, coordInfo),
         ]);
+      }
+    }
 
-        //-----LINE------ strings//
+    debug.elements[side] = debug.strings[side].map((coords, index) => (
+      <line
+        x1={coords[0].x}
+        y1={coords[0].y}
+        x2={coords[1].x}
+        y2={coords[1].y}
+        key={index}
+        className={side + "-debug"}
+      />
+    ));
+  }
+
+  return (
+    <g>
+      {debug.elements.forward}
+      {debug.elements.backward}
+    </g>
+  );
+}
+
+export function Line({ points, coordInfo }) {
+  if (!(points && coordInfo)) {
+    return null;
+  }
+
+  const line = {
+    elements: {},
+    strings: { continous: [], striped: [] },
+  };
+
+  for (const side of ["forward", "backward"]) {
+    for (const road of points) {
+      for (const [indexLane, lane] of road[side].entries()) {
         if (indexLane !== road[side].length - 1 || side === "backward") {
           if (indexLane === road[side].length - 1 && side === "backward") {
-            roads.line.strings.continous.push([
-              vectors.laneBottomRight(lane, road),
-              vectors.laneTopRight(lane, road),
+            line.strings.continous.push([
+              vectors.laneBottomRight(lane, road, coordInfo),
+              vectors.laneTopRight(lane, road, coordInfo),
             ]);
           } else {
-            roads.line.strings.striped.push([
-              vectors.laneBottomRight(lane, road),
-              vectors.laneTopRight(lane, road),
+            line.strings.striped.push([
+              vectors.laneBottomRight(lane, road, coordInfo),
+              vectors.laneTopRight(lane, road, coordInfo),
             ]);
           }
         }
       }
-
-      //-----ROTATE---- strings//
-      if (side === "backward") {
-        controls.rotate.strings.push({
-          vectors: vectors.roadTopMiddle(road),
-          order: road.order,
-        });
-      }
-
-      //-----CENTER---- strings//
-      if (indexRoad === 0) {
-        roads.center.string = pointsToString([
-          {
-            letter: "M",
-            coords: [vectors.roadBottomLeft(road)],
-          },
-        ]);
-      }
-      roads.center.string += pointsToString([
-        {
-          letter: "L",
-          coords: [vectors.roadBottomLeft(road), vectors.roadBottomRight(road)],
-        },
-      ]);
-
-      roads.coordInfo = <circle cx={coordInfo.x} cy={coordInfo.y} r="5" />;
-
-      //-----CURB----- strings//
-      if (indexRoad === 0) {
-        roads.curb.string = pointsToString([
-          {
-            letter: "M",
-            coords: [vectors.roadBottomLeft(road)],
-          },
-        ]);
-      }
-      roads.curb.string += pointsToString([
-        {
-          letter: "L",
-          coords: [vectors.roadBottomLeft(road), vectors.roadTopLeft(road)],
-        },
-        {
-          letter: "M",
-          coords: [vectors.roadTopRight(road)],
-        },
-        {
-          letter: "L",
-          coords: [vectors.roadBottomRight(road)],
-        },
-      ]);
-      if (indexRoad === points.length - 1) {
-        roads.curb.string += pointsToString([
-          {
-            letter: "L",
-            coords: [vectors.roadBottomLeft(points[0])],
-          },
-        ]);
-      }
-
-      //----ASPHALT---- elements//
-      roads.asphalt.elements[side] = roads.asphalt.strings[
-        side
-      ].map((lane, index) => (
-        <path ref={drop} d={lane} key={index} className={side + "-asphalt"} />
-      ));
-
-      //-----DEBUG----- elements//
-      roads.debug.elements[side] = roads.debug.strings[
-        side
-      ].map((coords, index) => (
-        <line
-          x1={coords[0].x}
-          y1={coords[0].y}
-          x2={coords[1].x}
-          y2={coords[1].y}
-          key={index}
-          className={side + "-debug"}
-        />
-      ));
-
-      //-----LINE------ elements//
-      roads.line.elements.striped = roads.line.strings.striped.map(
-        (coords, index) => (
-          <line
-            x1={coords[0].x}
-            y1={coords[0].y}
-            x2={coords[1].x}
-            y2={coords[1].y}
-            key={index}
-            className={side + "-line"}
-            strokeDasharray="30, 60"
-          />
-        )
-      );
-      roads.line.elements.continous = roads.line.strings.continous.map(
-        (coords, index) => (
-          <line
-            x1={coords[0].x}
-            y1={coords[0].y}
-            x2={coords[1].x}
-            y2={coords[1].y}
-            key={index}
-            className={side + "-line"}
-          />
-        )
-      );
-
-      if (side === "backward") {
-        //-LANE CONTROL- strings//
-        controls.lanes.strings.forward.remove.push(
-          sumVector(
-            vectors.roadBottomLeft(road),
-            lenDeg(coordInfo.roadLength / 3, road.angle)
-          )
-        );
-
-        controls.lanes.strings.forward.add.push(
-          sumVector(
-            vectors.roadBottomLeft(road),
-            lenDeg((coordInfo.roadLength * 2) / 3, road.angle)
-          )
-        );
-
-        controls.lanes.strings.backward.remove.push(
-          sumVector(
-            vectors.roadBottomRight(road),
-            lenDeg(coordInfo.roadLength / 3, road.angle)
-          )
-        );
-
-        controls.lanes.strings.backward.add.push(
-          sumVector(
-            vectors.roadBottomRight(road),
-            lenDeg((coordInfo.roadLength * 2) / 3, road.angle)
-          )
-        );
-
-        //-LANE CONTROL- elements//
-        controls.lanes.elements.forward.remove = controls.lanes.strings.forward.remove.map(
-          (coords, index) => (
-            <circle
-              cx={coords.x}
-              cy={coords.y}
-              r="10"
-              className="add-lane"
-              key={index}
-              onClick={() => addLanes(index, "Forward", -1)}
-            />
-          )
-        );
-
-        controls.lanes.elements.forward.add = controls.lanes.strings.forward.add.map(
-          (coords, index) => (
-            <circle
-              cx={coords.x}
-              cy={coords.y}
-              r="10"
-              className="add-lane"
-              key={index}
-              onClick={() => addLanes(index, "Forward", 1)}
-            />
-          )
-        );
-
-        controls.lanes.elements.backward.remove = controls.lanes.strings.backward.remove.map(
-          (coords, index) => (
-            <circle
-              cx={coords.x}
-              cy={coords.y}
-              r="10"
-              className="add-lane"
-              key={index}
-              onClick={() => addLanes(index, "Backward", -1)}
-            />
-          )
-        );
-
-        controls.lanes.elements.backward.add = controls.lanes.strings.backward.add.map(
-          (coords, index) => (
-            <circle
-              cx={coords.x}
-              cy={coords.y}
-              r="10"
-              className="add-lane"
-              key={index}
-              onClick={() => addLanes(index, "Backward", 1)}
-            />
-          )
-        );
-      }
     }
   }
 
-  //-----CENTER---- elements//
-  roads.center.element = <path d={roads.center.string} className="center" />;
+  line.elements.continous = line.strings.continous.map((coords, index) => (
+    <line
+      x1={coords[0].x}
+      y1={coords[0].y}
+      x2={coords[1].x}
+      y2={coords[1].y}
+      key={index}
+      className="line"
+      strokeDasharray="30, 60"
+    />
+  ));
 
-  //-----CURB----- elements//
-  roads.curb.element = <path d={roads.curb.string} className="curb" />;
+  line.elements.striped = line.strings.striped.map((coords, index) => (
+    <line
+      x1={coords[0].x}
+      y1={coords[0].y}
+      x2={coords[1].x}
+      y2={coords[1].y}
+      key={index}
+      className="line"
+    />
+  ));
 
-  //----ROTATE---- elements//
-  controls.rotate.elements = controls.rotate.strings.map((coords, index) => (
+  return (
+    <g>
+      {line.elements.continous}
+      {line.elements.striped}
+    </g>
+  );
+}
+
+export function RotateControl({ points, coordInfo, rotateBind }) {
+  if (!(points && coordInfo && rotateBind)) {
+    return null;
+  }
+
+  const rotate = {
+    strings: [],
+  };
+
+  for (const road of points) {
+    rotate.strings.push({
+      vectors: vectors.roadTopMiddle(road, coordInfo),
+      order: road.order,
+    });
+  }
+
+  rotate.elements = rotate.strings.map((coords, index) => (
     <circle
       cx={coords.vectors.x}
       cy={coords.vectors.y}
       r="10"
       className="rotate"
       key={index}
-      {...rotate(coords.order)}
+      {...rotateBind(coords.order)}
     />
   ));
 
-  return [roads, controls];
+  return <g>{rotate.elements}</g>;
+}
+
+export function LaneControl({ points, coordInfo, addLanes }) {
+  if (!(points && coordInfo)) {
+    return null;
+  }
+
+  const lane = {
+    strings: {
+      forward: { remove: [], add: [] },
+      backward: { remove: [], add: [] },
+    },
+    elements: {
+      forward: { remove: [], add: [] },
+      backward: { remove: [], add: [] },
+    },
+  };
+
+  for (const road of points) {
+    lane.strings.forward.remove.push(
+      sumVector(
+        vectors.roadBottomLeft(road, coordInfo),
+        lenDeg(coordInfo.roadLength / 3, road.angle)
+      )
+    );
+
+    lane.strings.forward.add.push(
+      sumVector(
+        vectors.roadBottomLeft(road, coordInfo),
+        lenDeg((coordInfo.roadLength * 2) / 3, road.angle)
+      )
+    );
+
+    lane.strings.backward.remove.push(
+      sumVector(
+        vectors.roadBottomRight(road, coordInfo),
+        lenDeg(coordInfo.roadLength / 3, road.angle)
+      )
+    );
+
+    lane.strings.backward.add.push(
+      sumVector(
+        vectors.roadBottomRight(road, coordInfo),
+        lenDeg((coordInfo.roadLength * 2) / 3, road.angle)
+      )
+    );
+  }
+
+  lane.elements.forward.remove = lane.strings.forward.remove.map(
+    (coords, index) => (
+      <circle
+        cx={coords.x}
+        cy={coords.y}
+        r="10"
+        className="add-lane"
+        key={index}
+        onClick={() => addLanes(index, "Forward", -1)}
+      />
+    )
+  );
+
+  lane.elements.forward.add = lane.strings.forward.add.map((coords, index) => (
+    <circle
+      cx={coords.x}
+      cy={coords.y}
+      r="10"
+      className="add-lane"
+      key={index}
+      onClick={() => addLanes(index, "Forward", 1)}
+    />
+  ));
+
+  lane.elements.backward.remove = lane.strings.backward.remove.map(
+    (coords, index) => (
+      <circle
+        cx={coords.x}
+        cy={coords.y}
+        r="10"
+        className="add-lane"
+        key={index}
+        onClick={() => addLanes(index, "Backward", -1)}
+      />
+    )
+  );
+
+  lane.elements.backward.add = lane.strings.backward.add.map(
+    (coords, index) => (
+      <circle
+        cx={coords.x}
+        cy={coords.y}
+        r="10"
+        className="add-lane"
+        key={index}
+        onClick={() => addLanes(index, "Backward", 1)}
+      />
+    )
+  );
+
+  return (
+    <g>
+      {lane.elements.forward.remove}
+      {lane.elements.forward.add}
+      {lane.elements.backward.remove}
+      {lane.elements.backward.add}
+    </g>
+  );
+}
+
+export function Center({ points, coordInfo }) {
+  if (!(points && coordInfo)) {
+    return null;
+  }
+
+  const center = {};
+
+  center.string = pointsToString([
+    {
+      letter: "M",
+      coords: [vectors.roadBottomLeft(points[0], coordInfo)],
+    },
+  ]);
+
+  for (const road of points) {
+    center.string += pointsToString([
+      {
+        letter: "L",
+        coords: [
+          vectors.roadBottomLeft(road, coordInfo),
+          vectors.roadBottomRight(road, coordInfo),
+        ],
+      },
+    ]);
+  }
+
+  center.element = <path d={center.string} className="center" />;
+
+  return center.element;
+}
+
+export function Curb({ points, coordInfo }) {
+  if (!(points && coordInfo)) {
+    return null;
+  }
+
+  const curb = {};
+
+  curb.string = pointsToString([
+    {
+      letter: "M",
+      coords: [vectors.roadBottomLeft(points[0], coordInfo)],
+    },
+  ]);
+
+  for (const [indexRoad, road] of points.entries()) {
+    curb.string += pointsToString([
+      {
+        letter: "L",
+        coords: [
+          vectors.roadBottomLeft(road, coordInfo),
+          vectors.roadTopLeft(road, coordInfo),
+        ],
+      },
+      {
+        letter: "M",
+        coords: [vectors.roadTopRight(road, coordInfo)],
+      },
+      {
+        letter: "L",
+        coords: [vectors.roadBottomRight(road, coordInfo)],
+      },
+    ]);
+    if (indexRoad === points.length - 1) {
+      curb.string += pointsToString([
+        {
+          letter: "L",
+          coords: [vectors.roadBottomLeft(points[0], coordInfo)],
+        },
+      ]);
+    }
+  }
+
+  curb.element = <path d={curb.string} className="curb" />;
+
+  return curb.element;
 }

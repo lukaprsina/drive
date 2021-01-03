@@ -46,13 +46,7 @@ body {
   stroke-width: 1px;
 }
 
-.forward-line {
-  fill: none;
-  stroke: white;
-  stroke-width: 2px;
-}
-
-.backward-line {
+.line {
   fill: none;
   stroke: white;
   stroke-width: 2px;
