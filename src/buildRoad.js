@@ -94,7 +94,49 @@ export function pointsToString(pointsArray) {
   return pathD;
 }
 
-export function Asphalt({ points, coordInfo, accept, onDrop }) {
+export function makeAsphalt({ points, coordInfo }) {
+  if (!(points && coordInfo)) {
+    return null;
+  }
+
+  const strings = { forward: [], backward: [] };
+
+  for (const side of ["forward", "backward"]) {
+    for (const road of points) {
+      for (const lane of road[side]) {
+        strings[side].push(
+          pointsToString([
+            { letter: "M", coords: [vectors.offsetBottom(lane, coordInfo)] },
+            {
+              letter: "L",
+              coords: [
+                vectors.laneBottomLeft(lane, road, coordInfo),
+                vectors.laneTopLeft(lane, road, coordInfo),
+                vectors.laneTopRight(lane, road, coordInfo),
+                vectors.laneBottomRight(lane, road, coordInfo),
+              ],
+            },
+            { letter: "Z" },
+          ])
+        );
+      }
+    }
+  }
+  return strings;
+}
+
+export function Asphalt({ string, side, index, accept, onDrop }) {
+  const [, dropBind] = useDrop({
+    accept,
+    drop: (item, monitor) => onDrop(item, monitor),
+  });
+
+  return (
+    <path ref={dropBind} d={string} key={index} className={side + "-asphalt"} />
+  );
+}
+
+/* export function Asphalt({ points, coordInfo, accept, onDrop }) {
   const [,dropBind] = useDrop({
     accept,
     drop: onDrop,
@@ -141,10 +183,10 @@ export function Asphalt({ points, coordInfo, accept, onDrop }) {
       {asphalt.elements.backward}
     </g>
   );
-}
+} */
 
-export function Debug({ points, coordInfo }) {
-  if (!(points && coordInfo)) {
+export function Debug({ points, coordInfo, disabled = false }) {
+  if (!(points && coordInfo && !disabled)) {
     return null;
   }
 

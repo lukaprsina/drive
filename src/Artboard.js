@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDrag } from "react-use-gesture";
 import {
+  makeAsphalt,
   Asphalt,
   Debug,
   Line,
@@ -100,9 +101,11 @@ export default function Artboard() {
   /* get a list of all the road points */
   const points = calculatePoints(roadInfo, coordInfo);
 
-  function handleDrop(item) {
-    console.log(item)
+  function handleDrop(item, monitor) {
+    console.log(item, monitor);
   }
+
+  const asphaltString = makeAsphalt({ points, coordInfo });
 
   return (
     // touch-action ensures that chrome doesnt stop the drag after a few frames,
@@ -111,16 +114,36 @@ export default function Artboard() {
 
     <div style={{ touchAction: "none" }}>
       <svg className="artboard" ref={artboardRef}>
-        <Asphalt
-          points={points}
-          coordInfo={coordInfo}
-          accept="sign"
-          onDrop={(item) => handleDrop(item)}
-        />
+        <g>
+          {asphaltString
+            ? asphaltString.backward.map((string, index) => (
+                <Asphalt
+                  string={string}
+                  side="backward"
+                  index={index}
+                  accept="sign"
+                  onDrop={(item) => handleDrop(item)}
+                  key={index}
+                />
+              ))
+            : null}
+          {asphaltString
+            ? asphaltString.forward.map((string, index) => (
+                <Asphalt
+                  string={string}
+                  side="forward"
+                  index={index}
+                  accept="sign"
+                  onDrop={(item, monitor) => handleDrop(item, monitor)}
+                  key={index}
+                />
+              ))
+            : null}
+        </g>
         <Center points={points} coordInfo={coordInfo} />
         <Curb points={points} coordInfo={coordInfo} />
         <Line points={points} coordInfo={coordInfo} />
-        {/* <Debug points={points} coordInfo={coordInfo} /> */}
+        <Debug points={points} coordInfo={coordInfo} disabled />
         <RotateControl
           points={points}
           coordInfo={coordInfo}
