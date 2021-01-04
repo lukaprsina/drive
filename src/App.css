@@ -70,11 +70,10 @@ body {
 }
 
 .drag {
-  background: #91c9f9;
   position: relative;
   width: 80px;
   height: 80px;
-  margin: 50px!important;
+  margin: 10px!important;
   user-select: none;
   touch-action: none;
   pointer-events: all;

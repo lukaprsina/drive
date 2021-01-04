@@ -100,6 +100,10 @@ export default function Artboard() {
   /* get a list of all the road points */
   const points = calculatePoints(roadInfo, coordInfo);
 
+  function handleDrop(item) {
+    console.log(item)
+  }
+
   return (
     // touch-action ensures that chrome doesnt stop the drag after a few frames,
     // but it doesn't work on svg elements
@@ -111,7 +115,7 @@ export default function Artboard() {
           points={points}
           coordInfo={coordInfo}
           accept="sign"
-          /* onDrop={(item) => handleDrop(item)} */
+          onDrop={(item) => handleDrop(item)}
         />
         <Center points={points} coordInfo={coordInfo} />
         <Curb points={points} coordInfo={coordInfo} />

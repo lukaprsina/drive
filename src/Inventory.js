@@ -1,5 +1,5 @@
 import React from "react";
-import { IconButton } from "@material-ui/core";
+// import { IconButton } from "@material-ui/core";
 import { useDrag } from "react-dnd";
 
 import forward from "./img/forward.svg";
@@ -17,18 +17,18 @@ export function Inventory() {
   return <div className="inventory">{Items}</div>;
 }
 
-function Item(props) {
+function Item({src, index}) {
   const [collectedProps, drag] = useDrag({
-    item: { id: props.index, type: "sign" },
-    end: (item, monitor) => {
+    item: { id: index, type: "sign" },
+    /* end: (item, monitor) => {
       const dropResult = monitor.getDropResult();
       console.log(item, dropResult, "from item")
-    }
+    } */
   });
 
   return (
-    <IconButton className="drag" ref={drag}>
-      <img src={props.src} className="sign" alt={props.src} draggable={false} />
-    </IconButton>
+    <div className="drag" ref={drag}>
+      <img src={src} className="sign" alt={src} draggable={false} />
+    </div>
   );
 }

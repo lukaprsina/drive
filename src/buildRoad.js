@@ -95,7 +95,7 @@ export function pointsToString(pointsArray) {
 }
 
 export function Asphalt({ points, coordInfo, accept, onDrop }) {
-  const [collectedProps, dropBind] = useDrop({
+  const [,dropBind] = useDrop({
     accept,
     drop: onDrop,
   });
