@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useDrag } from "react-use-gesture";
 import {
   makeAsphalt,
-  Asphalt,
   Debug,
   Line,
   RotateControl,
@@ -101,11 +100,19 @@ export default function Artboard() {
   /* get a list of all the road points */
   const points = calculatePoints(roadInfo, coordInfo);
 
-  function handleDrop(item, monitor) {
+  /* const [objectInfo, setObjectInfo] = useState([
+    { signs: [], backward: [], forward: [] },
+    { signs: [], backward: [], forward: [] },
+    { signs: [], backward: [], forward: [] },
+    { signs: [], backward: [], forward: [] },
+  ]); */
+
+  function handleDrop(item, monitor, index, indexRoad) {
     console.log(item, monitor);
+    console.log({index, indexRoad})
   }
 
-  const asphaltString = makeAsphalt({ points, coordInfo });
+  const asphaltElements = makeAsphalt({ points, coordInfo, handleDrop });
 
   return (
     // touch-action ensures that chrome doesnt stop the drag after a few frames,
@@ -114,32 +121,7 @@ export default function Artboard() {
 
     <div style={{ touchAction: "none" }}>
       <svg className="artboard" ref={artboardRef}>
-        <g>
-          {asphaltString
-            ? asphaltString.backward.map((string, index) => (
-                <Asphalt
-                  string={string}
-                  side="backward"
-                  index={index}
-                  accept="sign"
-                  onDrop={(item) => handleDrop(item)}
-                  key={index}
-                />
-              ))
-            : null}
-          {asphaltString
-            ? asphaltString.forward.map((string, index) => (
-                <Asphalt
-                  string={string}
-                  side="forward"
-                  index={index}
-                  accept="sign"
-                  onDrop={(item, monitor) => handleDrop(item, monitor)}
-                  key={index}
-                />
-              ))
-            : null}
-        </g>
+        <g>{asphaltElements}</g>
         <Center points={points} coordInfo={coordInfo} />
         <Curb points={points} coordInfo={coordInfo} />
         <Line points={points} coordInfo={coordInfo} />
