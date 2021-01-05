@@ -9,6 +9,8 @@ import {
   Center,
   Curb,
 } from "./buildRoad";
+import Cars from "./Cars";
+
 const _ = require("lodash");
 
 export default function Artboard() {
@@ -114,24 +116,22 @@ export default function Artboard() {
       newObjectInfo[indexRoad][side][indexLane] = [];
     }
 
-    newObjectInfo[indexRoad][side][indexLane].push(item);
+    newObjectInfo[indexRoad][side][indexLane].push(item.id);
     setObjectInfo(newObjectInfo);
   }
 
   function handleSignDrop(item, indexRoad, side) {
     if (side === "forward") {
       const newObjectInfo = _.cloneDeep(objectInfo);
-      
+
       if (!newObjectInfo[indexRoad].signs) {
         newObjectInfo[indexRoad].signs = [];
       }
 
-      newObjectInfo[indexRoad].signs.push(item);
+      newObjectInfo[indexRoad].signs.push(item.id);
       setObjectInfo(newObjectInfo);
     }
   }
-
-  console.log(objectInfo)
 
   const asphaltElements = makeAsphalt({
     points,
@@ -139,6 +139,13 @@ export default function Artboard() {
     handleSignDrop,
     handleCarDrop,
   });
+
+  if (asphaltElements) {
+    var asphaltBackward = asphaltElements.backward;
+    var asphaltForward = asphaltElements.forward;
+  }
+
+  console.log(objectInfo)
 
   return (
     // touch-action ensures that chrome doesnt stop the drag after a few frames,
@@ -148,8 +155,8 @@ export default function Artboard() {
     <div style={{ touchAction: "none" }}>
       <svg className="artboard" ref={artboardRef}>
         <g>
-          {asphaltElements ? asphaltElements.backward : null}
-          {asphaltElements ? asphaltElements.forward : null}
+          {asphaltBackward}
+          {asphaltForward}
         </g>
         <Center points={points} coordInfo={coordInfo} />
         <Curb points={points} coordInfo={coordInfo} />
@@ -165,6 +172,7 @@ export default function Artboard() {
           coordInfo={coordInfo}
           addLanes={addLanes}
         />
+        <Cars objectInfo={objectInfo} coordInfo={coordInfo} />
       </svg>
     </div>
   );
@@ -196,13 +204,19 @@ function calculatePoints(roadInfo, coordInfo) {
     };
 
     const allLanes = road.numberOfForward + road.numberOfBackward;
+    const test =
+      ((road.numberOfForward + road.numberOfBackward) * coordInfo.roadWidth) /
+      5;
 
     for (let j = 0; j < allLanes; j++) {
       let firstPoint = sumVector(
         /* sum vector pointing east to get left or right */
         lenDeg(maxDistance - j * coordInfo.roadWidth, road.angle - 90),
         /* and the vector, responsible for making the center area */
-        lenDeg(coordInfo.maxRoadWidth * coordInfo.roadWidth * 0.7, road.angle)
+        sumVector(
+          lenDeg(coordInfo.maxRoadWidth * coordInfo.roadWidth, road.angle),
+          lenDeg(test, road.angle - 180)
+        )
       );
 
       let lastPoint = sumVector(
@@ -210,7 +224,7 @@ function calculatePoints(roadInfo, coordInfo) {
         lenDeg(coordInfo.roadLength, road.angle)
       );
 
-      if (j >= road.numberOfForward) {
+      if (j < road.numberOfForward) {
         points[i].forward.push({ first: firstPoint, last: lastPoint });
       } else {
         points[i].backward.push({ first: firstPoint, last: lastPoint });

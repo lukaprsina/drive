@@ -2,7 +2,7 @@ import React from "react";
 import { useDrop } from "react-dnd";
 import { sumVector, lenDeg } from "./Artboard";
 
-const vectors = {
+/* const vectors = {
   offsetBottom: (lane, coordInfo) => sumVector(coordInfo, lane.first),
 
   offsetTop: (lane, coordInfo) => sumVector(coordInfo, lane.last),
@@ -73,6 +73,79 @@ const vectors = {
         vectors.roadBottomLeft(road, coordInfo)
       )
     ),
+}; */
+
+const vectors = {
+  offsetBottom: (lane, coordInfo) => sumVector(coordInfo, lane.first),
+
+  offsetTop: (lane, coordInfo) => sumVector(coordInfo, lane.last),
+
+  halfRoadLeft: (road, coordInfo) =>
+    lenDeg(coordInfo.roadWidth / 2, road.angle - 90),
+
+  halfRoadRight: (road, coordInfo) =>
+    lenDeg(coordInfo.roadWidth / 2, road.angle + 90),
+
+  laneBottomLeft: (lane, road, coordInfo) =>
+    sumVector(
+      vectors.halfRoadLeft(road, coordInfo),
+      vectors.offsetBottom(lane, coordInfo)
+    ),
+
+  laneTopLeft: (lane, road, coordInfo) =>
+    sumVector(
+      vectors.halfRoadLeft(road, coordInfo),
+      vectors.offsetTop(lane, coordInfo)
+    ),
+
+  laneBottomRight: (lane, road, coordInfo) =>
+    sumVector(
+      vectors.halfRoadRight(road, coordInfo),
+      vectors.offsetBottom(lane, coordInfo)
+    ),
+
+  laneTopRight: (lane, road, coordInfo) =>
+    sumVector(
+      vectors.halfRoadRight(road, coordInfo),
+      vectors.offsetTop(lane, coordInfo)
+    ),
+
+  roadBottomLeft: (road, coordInfo) =>
+    sumVector(
+      sumVector(road.forward[0].first, coordInfo),
+      vectors.halfRoadLeft(road, coordInfo)
+    ),
+
+  roadBottomRight: (road, coordInfo) =>
+    sumVector(
+      sumVector(road.backward[road.backward.length - 1].first, coordInfo),
+      vectors.halfRoadRight(road, coordInfo)
+    ),
+  roadTopLeft: (road, coordInfo) =>
+    sumVector(
+      sumVector(road.forward[0].last, coordInfo),
+      vectors.halfRoadLeft(road, coordInfo)
+    ),
+
+  roadTopRight: (road, coordInfo) =>
+    sumVector(
+      sumVector(road.backward[road.backward.length - 1].last, coordInfo),
+      vectors.halfRoadRight(road, coordInfo)
+    ),
+
+  roadTopMiddle: (road, coordInfo) =>
+    sumVector(
+      lenDeg(coordInfo.roadLength, road.angle),
+      sumVector(
+        lenDeg(
+          ((road.numberOfForward + road.numberOfBackward) *
+            coordInfo.roadWidth) /
+            2,
+          road.angle + 90
+        ),
+        vectors.roadBottomLeft(road, coordInfo)
+      )
+    ),
 };
 
 export function pointsToString(pointsArray) {
@@ -99,8 +172,9 @@ export function makeAsphalt({
   coordInfo,
   handleSignDrop,
   handleCarDrop,
+  disabled = false,
 }) {
-  if (!(points && coordInfo)) {
+  if (!(points && coordInfo && !disabled)) {
     return null;
   }
 
@@ -109,7 +183,7 @@ export function makeAsphalt({
   for (const [indexRoad, road] of points.entries()) {
     let strings = { forward: [], backward: [] };
 
-    for (const side of ["forward", "backward"]) {
+    for (const side of ["backward", "forward"]) {
       for (const lane of road[side]) {
         strings[side].push(
           pointsToString([
@@ -129,7 +203,7 @@ export function makeAsphalt({
       }
     }
 
-    for (const side of ["forward", "backward"]) {
+    for (const side of ["backward", "forward"]) {
       elements[side].push(
         <SvgGroup
           key={indexRoad}
@@ -156,23 +230,16 @@ export function makeAsphalt({
   return elements;
 }
 
-function SvgGroup({accept, onDrop, indexRoad, children, side}) {
+function SvgGroup({ accept, onDrop, indexRoad, children, side }) {
   const [, dropBind] = useDrop({
     accept,
     drop: (item) => onDrop(item, indexRoad, side),
   });
 
-  return (<g ref={dropBind}>{children}</g>)
+  return <g ref={dropBind}>{children}</g>;
 }
 
-function Asphalt({
-  string,
-  side,
-  indexLane,
-  indexRoad,
-  accept,
-  onDrop,
-}) {
+function Asphalt({ string, side, indexLane, indexRoad, accept, onDrop }) {
   const [, dropBind] = useDrop({
     accept,
     drop: (item) => onDrop(item, indexRoad, side, indexLane),
@@ -198,7 +265,7 @@ export function Debug({ points, coordInfo, disabled = false }) {
     elements: {},
   };
 
-  for (const side of ["forward", "backward"]) {
+  for (const side of ["backward", "forward"]) {
     for (const road of points) {
       for (const lane of road[side]) {
         debug.strings[side].push([
@@ -228,8 +295,8 @@ export function Debug({ points, coordInfo, disabled = false }) {
   );
 }
 
-export function Line({ points, coordInfo }) {
-  if (!(points && coordInfo)) {
+export function Line({ points, coordInfo, disabled = false }) {
+  if (!(points && coordInfo && !disabled)) {
     return null;
   }
 
@@ -238,11 +305,11 @@ export function Line({ points, coordInfo }) {
     strings: { continous: [], striped: [] },
   };
 
-  for (const side of ["forward", "backward"]) {
+  for (const side of ["backward", "forward"]) {
     for (const road of points) {
       for (const [indexLane, lane] of road[side].entries()) {
-        if (indexLane !== road[side].length - 1 || side === "backward") {
-          if (indexLane === road[side].length - 1 && side === "backward") {
+        if (indexLane !== road[side].length - 1 || side === "forward") {
+          if (indexLane === road[side].length - 1 && side === "forward") {
             line.strings.continous.push([
               vectors.laneBottomRight(lane, road, coordInfo),
               vectors.laneTopRight(lane, road, coordInfo),
@@ -289,8 +356,13 @@ export function Line({ points, coordInfo }) {
   );
 }
 
-export function RotateControl({ points, coordInfo, rotateBind }) {
-  if (!(points && coordInfo && rotateBind)) {
+export function RotateControl({
+  points,
+  coordInfo,
+  rotateBind,
+  disabled = false,
+}) {
+  if (!(points && coordInfo && rotateBind && !disabled)) {
     return null;
   }
 
@@ -319,8 +391,8 @@ export function RotateControl({ points, coordInfo, rotateBind }) {
   return <g>{rotate.elements}</g>;
 }
 
-export function LaneControl({ points, coordInfo, addLanes }) {
-  if (!(points && coordInfo)) {
+export function LaneControl({ points, coordInfo, addLanes, disabled = false }) {
+  if (!(points && coordInfo && !disabled)) {
     return null;
   }
 
@@ -425,8 +497,8 @@ export function LaneControl({ points, coordInfo, addLanes }) {
   );
 }
 
-export function Center({ points, coordInfo }) {
-  if (!(points && coordInfo)) {
+export function Center({ points, coordInfo, disabled = false }) {
+  if (!(points && coordInfo && !disabled)) {
     return null;
   }
 
@@ -456,8 +528,8 @@ export function Center({ points, coordInfo }) {
   return center.element;
 }
 
-export function Curb({ points, coordInfo }) {
-  if (!(points && coordInfo)) {
+export function Curb({ points, coordInfo, disabled = false }) {
+  if (!(points && coordInfo && !disabled)) {
     return null;
   }
 
