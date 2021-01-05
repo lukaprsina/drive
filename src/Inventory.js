@@ -1,5 +1,5 @@
 import React from "react";
-// import { IconButton } from "@material-ui/core";
+import { IconButton } from "@material-ui/core";
 import { useDrag } from "react-dnd";
 
 import forward from "./img/forward.svg";
@@ -11,14 +11,27 @@ import priority from "./img/priority.svg";
 
 export function Inventory() {
   const images = [forward, give_way, left, right, stop, priority];
-  const Items = images.map((image, index) => (
-    <Item src={image} key={index} index={index} />
+  const Signs = images.map((image, index) => (
+    <Sign src={image} key={index} index={index} />
   ));
-  return <div className="inventory">{Items}</div>;
+
+  return <div className="inventory">{Signs}<Car /></div>;
 }
 
-function Item({src, index}) {
-  const [collectedProps, drag] = useDrag({
+function Car() {
+  const [, drag] = useDrag({
+    item: { id: "car", type: "car" },
+  });
+
+  return (
+    <div className="drag" ref={drag}>
+      <div className="item car" draggable={false} ></div>
+    </div>
+  );
+}
+
+function Sign({src, index}) {
+  const [, drag] = useDrag({
     item: { id: index, type: "sign" },
     /* end: (item, monitor) => {
       const dropResult = monitor.getDropResult();
@@ -27,8 +40,8 @@ function Item({src, index}) {
   });
 
   return (
-    <div className="drag" ref={drag}>
-      <img src={src} className="sign" alt={src} draggable={false} />
-    </div>
+    <IconButton className="drag" ref={drag}>
+      <img src={src} className="item sign" alt={src} draggable={false} />
+    </IconButton>
   );
 }

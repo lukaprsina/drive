@@ -9,6 +9,7 @@ import {
   Center,
   Curb,
 } from "./buildRoad";
+const _ = require("lodash");
 
 export default function Artboard() {
   /* svg ref */
@@ -54,8 +55,7 @@ export default function Artboard() {
         deg += 360;
       }
 
-      // shallow copy
-      const newRoadInfo = roadInfo.map((a) => ({ ...a }));
+      const newRoadInfo = _.cloneDeep(roadInfo);
       newRoadInfo.sort((a, b) => a.angle - b.angle);
 
       for (let i = 0; i < newRoadInfo.length; i++) {
@@ -69,7 +69,7 @@ export default function Artboard() {
   });
 
   function addLanes(index, side, add) {
-    const newRoadInfo = roadInfo.map((a) => ({ ...a }));
+    const newRoadInfo = _.cloneDeep(roadInfo);
 
     const numberOfLanes = newRoadInfo[index]["numberOf" + side];
 
@@ -100,28 +100,57 @@ export default function Artboard() {
   /* get a list of all the road points */
   const points = calculatePoints(roadInfo, coordInfo);
 
-  /* const [objectInfo, setObjectInfo] = useState([
-    { signs: [], backward: [], forward: [] },
-    { signs: [], backward: [], forward: [] },
-    { signs: [], backward: [], forward: [] },
-    { signs: [], backward: [], forward: [] },
-  ]); */
+  const [objectInfo, setObjectInfo] = useState([
+    { backward: [], forward: [] },
+    { backward: [], forward: [] },
+    { backward: [], forward: [] },
+    { backward: [], forward: [] },
+  ]);
 
-  function handleDrop(item, monitor, index, indexRoad) {
-    console.log(item, monitor);
-    console.log({index, indexRoad})
+  function handleCarDrop(item, indexRoad, side, indexLane) {
+    const newObjectInfo = _.cloneDeep(objectInfo);
+
+    if (!newObjectInfo[indexRoad][side][indexLane]) {
+      newObjectInfo[indexRoad][side][indexLane] = [];
+    }
+
+    newObjectInfo[indexRoad][side][indexLane].push(item);
+    setObjectInfo(newObjectInfo);
   }
 
-  const asphaltElements = makeAsphalt({ points, coordInfo, handleDrop });
+  function handleSignDrop(item, indexRoad, side) {
+    if (side === "forward") {
+      const newObjectInfo = _.cloneDeep(objectInfo);
+      
+      if (!newObjectInfo[indexRoad].signs) {
+        newObjectInfo[indexRoad].signs = [];
+      }
+
+      newObjectInfo[indexRoad].signs.push(item);
+      setObjectInfo(newObjectInfo);
+    }
+  }
+
+  console.log(objectInfo)
+
+  const asphaltElements = makeAsphalt({
+    points,
+    coordInfo,
+    handleSignDrop,
+    handleCarDrop,
+  });
 
   return (
     // touch-action ensures that chrome doesnt stop the drag after a few frames,
-    // but it doesn't work on svg elements
+    // but it doesn't work on svg elements, so I wraped it in a div,
     // https://stackoverflow.com/questions/45678190/dynamically-disabling-touch-action-overscroll-for-svg-elements
 
     <div style={{ touchAction: "none" }}>
       <svg className="artboard" ref={artboardRef}>
-        <g>{asphaltElements}</g>
+        <g>
+          {asphaltElements ? asphaltElements.backward : null}
+          {asphaltElements ? asphaltElements.forward : null}
+        </g>
         <Center points={points} coordInfo={coordInfo} />
         <Curb points={points} coordInfo={coordInfo} />
         <Line points={points} coordInfo={coordInfo} />

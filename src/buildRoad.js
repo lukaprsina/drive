@@ -94,19 +94,24 @@ export function pointsToString(pointsArray) {
   return pathD;
 }
 
-export function makeAsphalt({ points, coordInfo, handleDrop }) {
+export function makeAsphalt({
+  points,
+  coordInfo,
+  handleSignDrop,
+  handleCarDrop,
+}) {
   if (!(points && coordInfo)) {
     return null;
   }
 
-  const elements = [];
+  const elements = { forward: [], backward: [] };
 
   for (const [indexRoad, road] of points.entries()) {
-    let strings = [];
+    let strings = { forward: [], backward: [] };
 
     for (const side of ["forward", "backward"]) {
       for (const lane of road[side]) {
-        strings.push(
+        strings[side].push(
           pointsToString([
             { letter: "M", coords: [vectors.offsetBottom(lane, coordInfo)] },
             {
@@ -124,33 +129,62 @@ export function makeAsphalt({ points, coordInfo, handleDrop }) {
       }
     }
 
-    elements.push(
-      <g key={indexRoad}>
-        {strings.map((string, index) => (
-          <Asphalt
-            string={string}
-            side="backward"
-            index={index}
-            indexRoad={indexRoad}
-            accept="sign"
-            onDrop={(item, monitor) => handleDrop(item, monitor, index, indexRoad)}
-            key={index}
-          />
-        ))}
-      </g>
-    );
+    for (const side of ["forward", "backward"]) {
+      elements[side].push(
+        <SvgGroup
+          key={indexRoad}
+          indexRoad={indexRoad}
+          accept={["sign"]}
+          side={side}
+          onDrop={(item) => handleSignDrop(item, indexRoad, side)}
+        >
+          {strings[side].map((string, index) => (
+            <Asphalt
+              string={string}
+              side={side}
+              indexLane={index}
+              indexRoad={indexRoad}
+              accept={["car"]}
+              onDrop={(item) => handleCarDrop(item, indexRoad, side, index)}
+              key={index}
+            />
+          ))}
+        </SvgGroup>
+      );
+    }
   }
   return elements;
 }
 
-export function Asphalt({ string, side, index, indexRoad, accept, onDrop }) {
+function SvgGroup({accept, onDrop, indexRoad, children, side}) {
   const [, dropBind] = useDrop({
     accept,
-    drop: (item, monitor) => onDrop(item, monitor, index, indexRoad),
+    drop: (item) => onDrop(item, indexRoad, side),
+  });
+
+  return (<g ref={dropBind}>{children}</g>)
+}
+
+function Asphalt({
+  string,
+  side,
+  indexLane,
+  indexRoad,
+  accept,
+  onDrop,
+}) {
+  const [, dropBind] = useDrop({
+    accept,
+    drop: (item) => onDrop(item, indexRoad, side, indexLane),
   });
 
   return (
-    <path ref={dropBind} d={string} key={index} className={side + "-asphalt"} />
+    <path
+      ref={dropBind}
+      d={string}
+      key={indexLane}
+      className={side + "-asphalt"}
+    />
   );
 }
 

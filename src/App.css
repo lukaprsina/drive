@@ -79,11 +79,16 @@ body {
   pointer-events: all;
 }
 
-.sign {
+.item {
   pointer-events: all;
   position: relative;
   width: 80px;
   height: 80px;
   user-select: none;
   touch-action: none;
+}
+
+.car {
+  border-radius: 50%;
+  background-color: red;
 }
