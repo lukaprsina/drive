@@ -2,79 +2,6 @@ import React from "react";
 import { useDrop } from "react-dnd";
 import { sumVector, lenDeg } from "./Artboard";
 
-/* const vectors = {
-  offsetBottom: (lane, coordInfo) => sumVector(coordInfo, lane.first),
-
-  offsetTop: (lane, coordInfo) => sumVector(coordInfo, lane.last),
-
-  halfRoadLeft: (road, coordInfo) =>
-    lenDeg(coordInfo.roadWidth / 2, road.angle - 90),
-
-  halfRoadRight: (road, coordInfo) =>
-    lenDeg(coordInfo.roadWidth / 2, road.angle + 90),
-
-  laneBottomLeft: (lane, road, coordInfo) =>
-    sumVector(
-      vectors.halfRoadLeft(road, coordInfo),
-      vectors.offsetBottom(lane, coordInfo)
-    ),
-
-  laneTopLeft: (lane, road, coordInfo) =>
-    sumVector(
-      vectors.halfRoadLeft(road, coordInfo),
-      vectors.offsetTop(lane, coordInfo)
-    ),
-
-  laneBottomRight: (lane, road, coordInfo) =>
-    sumVector(
-      vectors.halfRoadRight(road, coordInfo),
-      vectors.offsetBottom(lane, coordInfo)
-    ),
-
-  laneTopRight: (lane, road, coordInfo) =>
-    sumVector(
-      vectors.halfRoadRight(road, coordInfo),
-      vectors.offsetTop(lane, coordInfo)
-    ),
-
-  roadBottomLeft: (road, coordInfo) =>
-    sumVector(
-      sumVector(road.backward[0].first, coordInfo),
-      vectors.halfRoadLeft(road, coordInfo)
-    ),
-
-  roadBottomRight: (road, coordInfo) =>
-    sumVector(
-      sumVector(road.forward[road.forward.length - 1].first, coordInfo),
-      vectors.halfRoadRight(road, coordInfo)
-    ),
-  roadTopLeft: (road, coordInfo) =>
-    sumVector(
-      sumVector(road.backward[0].last, coordInfo),
-      vectors.halfRoadLeft(road, coordInfo)
-    ),
-
-  roadTopRight: (road, coordInfo) =>
-    sumVector(
-      sumVector(road.forward[road.forward.length - 1].last, coordInfo),
-      vectors.halfRoadRight(road, coordInfo)
-    ),
-
-  roadTopMiddle: (road, coordInfo) =>
-    sumVector(
-      lenDeg(coordInfo.roadLength, road.angle),
-      sumVector(
-        lenDeg(
-          ((road.numberOfForward + road.numberOfBackward) *
-            coordInfo.roadWidth) /
-            2,
-          road.angle + 90
-        ),
-        vectors.roadBottomLeft(road, coordInfo)
-      )
-    ),
-}; */
-
 const vectors = {
   offsetBottom: (lane, coordInfo) => sumVector(coordInfo, lane.first),
 
@@ -159,8 +86,12 @@ export function pointsToString(pointsArray) {
     pathD += order.letter + " ";
 
     if (order.coords) {
-      for (const coords of order.coords) {
-        pathD += coords.x + " " + coords.y + " ";
+      if (order.letter in ["c", "C", "q", "Q", "s", "S"]) {
+        console.log("curve")
+      } else {
+        for (const coords of order.coords) {
+          pathD += coords.x + " " + coords.y + " ";
+        }
       }
     }
   }
@@ -354,6 +285,39 @@ export function Line({ points, coordInfo, disabled = false }) {
       {line.elements.striped}
     </g>
   );
+}
+
+export function LaneConnect({ points, coordInfo, disabled = false }) {
+  const curves = {
+    strings: [],
+  };
+
+  if (!(points && coordInfo && !disabled)) {
+    return null;
+  }
+
+  /* pointsToString([
+    { letter: "M", coords: [vectors.offsetBottom(lane, coordInfo)] },
+    {
+      letter: "L",
+      coords: [
+        vectors.laneBottomLeft(lane, road, coordInfo),
+        vectors.laneTopLeft(lane, road, coordInfo),
+        vectors.laneTopRight(lane, road, coordInfo),
+        vectors.laneBottomRight(lane, road, coordInfo),
+      ],
+    },
+    { letter: "Z" },
+  ])
+   */
+  for (const road of points) {
+    for (const lane of road.forward) {
+      curves.strings.push(pointsToString([
+        { letter: "M", coords: [vectors.offsetBottom(lane, coordInfo)]}
+      ]));
+    }
+  }
+  return <text>LaneConnect</text>;
 }
 
 export function RotateControl({

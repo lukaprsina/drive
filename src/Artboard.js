@@ -8,6 +8,7 @@ import {
   LaneControl,
   Center,
   Curb,
+  LaneConnect,
 } from "./buildRoad";
 import Cars from "./Cars";
 
@@ -145,8 +146,6 @@ export default function Artboard() {
     var asphaltForward = asphaltElements.forward;
   }
 
-  console.log(objectInfo)
-
   return (
     // touch-action ensures that chrome doesnt stop the drag after a few frames,
     // but it doesn't work on svg elements, so I wraped it in a div,
@@ -161,6 +160,7 @@ export default function Artboard() {
         <Center points={points} coordInfo={coordInfo} />
         <Curb points={points} coordInfo={coordInfo} />
         <Line points={points} coordInfo={coordInfo} />
+        <LaneConnect points={points} coordInfo={coordInfo} />
         <Debug points={points} coordInfo={coordInfo} disabled />
         <RotateControl
           points={points}
