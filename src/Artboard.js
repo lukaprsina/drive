@@ -8,6 +8,7 @@ import {
   LaneControl,
   Center,
   Curb,
+  LaneConnect,
 } from "./buildRoad";
 import Cars from "./Cars";
 
@@ -161,6 +162,7 @@ export default function Artboard() {
         <Center points={points} coordInfo={coordInfo} />
         <Curb points={points} coordInfo={coordInfo} />
         <Line points={points} coordInfo={coordInfo} />
+        <LaneConnect points={points} coordInfo={coordInfo} />
         <Debug points={points} coordInfo={coordInfo} disabled />
         <RotateControl
           points={points}
