@@ -25,7 +25,7 @@ function Car() {
 
   return (
     <div className="drag" ref={drag}>
-      <div className="item car" draggable={false} ></div>
+      <div className="item car-item" draggable={false} ></div>
     </div>
   );
 }

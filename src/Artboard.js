@@ -47,6 +47,79 @@ export default function Artboard() {
     },
   ]);
 
+  const vectors = {
+    offsetBottom: (lane, coordInfo) => sumVector(coordInfo, lane.first),
+
+    offsetTop: (lane, coordInfo) => sumVector(coordInfo, lane.last),
+
+    halfRoadLeft: (road, coordInfo) =>
+      lenDeg(coordInfo.roadWidth / 2, road.angle - 90),
+
+    halfRoadRight: (road, coordInfo) =>
+      lenDeg(coordInfo.roadWidth / 2, road.angle + 90),
+
+    laneBottomLeft: (lane, road, coordInfo) =>
+      sumVector(
+        vectors.halfRoadLeft(road, coordInfo),
+        vectors.offsetBottom(lane, coordInfo)
+      ),
+
+    laneTopLeft: (lane, road, coordInfo) =>
+      sumVector(
+        vectors.halfRoadLeft(road, coordInfo),
+        vectors.offsetTop(lane, coordInfo)
+      ),
+
+    laneBottomRight: (lane, road, coordInfo) =>
+      sumVector(
+        vectors.halfRoadRight(road, coordInfo),
+        vectors.offsetBottom(lane, coordInfo)
+      ),
+
+    laneTopRight: (lane, road, coordInfo) =>
+      sumVector(
+        vectors.halfRoadRight(road, coordInfo),
+        vectors.offsetTop(lane, coordInfo)
+      ),
+
+    roadBottomLeft: (road, coordInfo) =>
+      sumVector(
+        sumVector(road.forward[0].first, coordInfo),
+        vectors.halfRoadLeft(road, coordInfo)
+      ),
+
+    roadBottomRight: (road, coordInfo) =>
+      sumVector(
+        sumVector(road.backward[road.backward.length - 1].first, coordInfo),
+        vectors.halfRoadRight(road, coordInfo)
+      ),
+    roadTopLeft: (road, coordInfo) =>
+      sumVector(
+        sumVector(road.forward[0].last, coordInfo),
+        vectors.halfRoadLeft(road, coordInfo)
+      ),
+
+    roadTopRight: (road, coordInfo) =>
+      sumVector(
+        sumVector(road.backward[road.backward.length - 1].last, coordInfo),
+        vectors.halfRoadRight(road, coordInfo)
+      ),
+
+    roadTopMiddle: (road, coordInfo) =>
+      sumVector(
+        lenDeg(coordInfo.roadLength, road.angle),
+        sumVector(
+          lenDeg(
+            ((road.numberOfForward + road.numberOfBackward) *
+              coordInfo.roadWidth) /
+              2,
+            road.angle + 90
+          ),
+          vectors.roadBottomLeft(road, coordInfo)
+        )
+      ),
+  };
+
   const rotateBind = useDrag(({ event, args: [order] }) => {
     if (event.x && event.y) {
       const newPoint = sumVector(event, multVector(coordInfo, -1));
@@ -104,34 +177,32 @@ export default function Artboard() {
   const points = calculatePoints(roadInfo, coordInfo);
 
   const [objectInfo, setObjectInfo] = useState([
-    { backward: [], forward: [] },
-    { backward: [], forward: [] },
-    { backward: [], forward: [] },
-    { backward: [], forward: [] },
+    { cars: [], signs: [] },
+    { cars: [], signs: [] },
+    { cars: [], signs: [] },
+    { cars: [], signs: [] },
   ]);
 
-  function handleCarDrop(item, indexRoad, side, indexLane) {
+  function handleCarDrop(item, indexRoad, indexLane) {
     const newObjectInfo = _.cloneDeep(objectInfo);
 
-    if (!newObjectInfo[indexRoad][side][indexLane]) {
-      newObjectInfo[indexRoad][side][indexLane] = [];
+    if (!newObjectInfo[indexRoad].cars[indexLane]) {
+      newObjectInfo[indexRoad].cars[indexLane] = [];
     }
 
-    newObjectInfo[indexRoad][side][indexLane].push(item.id);
+    newObjectInfo[indexRoad].cars[indexLane].push(item.id);
     setObjectInfo(newObjectInfo);
   }
 
-  function handleSignDrop(item, indexRoad, side) {
-    if (side === "forward") {
-      const newObjectInfo = _.cloneDeep(objectInfo);
+  function handleSignDrop(item, indexRoad) {
+    const newObjectInfo = _.cloneDeep(objectInfo);
 
-      if (!newObjectInfo[indexRoad].signs) {
-        newObjectInfo[indexRoad].signs = [];
-      }
-
-      newObjectInfo[indexRoad].signs.push(item.id);
-      setObjectInfo(newObjectInfo);
+    if (!newObjectInfo[indexRoad].signs) {
+      newObjectInfo[indexRoad].signs = [];
     }
+
+    newObjectInfo[indexRoad].signs.push(item.id);
+    setObjectInfo(newObjectInfo);
   }
 
   const asphaltElements = makeAsphalt({
@@ -139,14 +210,13 @@ export default function Artboard() {
     coordInfo,
     handleSignDrop,
     handleCarDrop,
+    vectors,
   });
 
   if (asphaltElements) {
     var asphaltBackward = asphaltElements.backward;
     var asphaltForward = asphaltElements.forward;
   }
-
-  /* console.log(objectInfo) */
 
   return (
     // touch-action ensures that chrome doesnt stop the drag after a few frames,
@@ -159,22 +229,38 @@ export default function Artboard() {
           {asphaltBackward}
           {asphaltForward}
         </g>
-        <Center points={points} coordInfo={coordInfo} />
-        <Curb points={points} coordInfo={coordInfo} />
-        <Line points={points} coordInfo={coordInfo} />
-        <LaneConnect points={points} coordInfo={coordInfo} />
-        <Debug points={points} coordInfo={coordInfo} disabled />
+        <Center points={points} coordInfo={coordInfo} vectors={vectors} />
+        <Curb points={points} coordInfo={coordInfo} vectors={vectors} />
+        <Line points={points} coordInfo={coordInfo} vectors={vectors} />
+        <LaneConnect
+          points={points}
+          coordInfo={coordInfo}
+          vectors={vectors}
+          disabled
+        />
+        <Debug
+          points={points}
+          coordInfo={coordInfo}
+          disabled
+          vectors={vectors}
+        />
         <RotateControl
           points={points}
           coordInfo={coordInfo}
           rotateBind={rotateBind}
+          vectors={vectors}
         />
         <LaneControl
           points={points}
           coordInfo={coordInfo}
           addLanes={addLanes}
+          vectors={vectors}
         />
-        <Cars objectInfo={objectInfo} coordInfo={coordInfo} />
+        <Cars
+          objectInfo={objectInfo}
+          coordInfo={coordInfo}
+          points={points}
+        />
       </svg>
     </div>
   );
@@ -275,4 +361,23 @@ export function getCoordinateInfo(element, roadInfo) {
   const roadWidth = (windowBox / maxRoadWidth) * 0.5;
 
   return { x, y, roadLength, roadWidth, maxRoadWidth };
+}
+
+export function pointsToString(pointsArray) {
+  if (!(pointsArray && pointsArray.length)) {
+    return null;
+  }
+
+  let pathD = "";
+
+  for (const order of pointsArray) {
+    pathD += order.letter + " ";
+
+    if (order.coords) {
+      for (const coords of order.coords) {
+        pathD += coords.x + " " + coords.y + " ";
+      }
+    }
+  }
+  return pathD;
 }

@@ -34,13 +34,7 @@ body {
   stroke-width: 2px;
 }
 
-.forward-asphalt {
-  fill: #4d5250;
-  stroke: #4d5250;
-  stroke-width: 1px;
-}
-
-.backward-asphalt {
+.asphalt {
   fill: #4d5250;
   stroke: #4d5250;
   stroke-width: 1px;
@@ -59,6 +53,12 @@ body {
 
 .add-lane {
   fill: blue;
+}
+
+.curve {
+  fill: none;
+  stroke:yellow;
+  stroke-width: 2px;
 }
 
 .inventory {
@@ -88,7 +88,11 @@ body {
   touch-action: none;
 }
 
-.car {
+.car-item {
   border-radius: 50%;
   background-color: red;
+}
+
+.car {
+  fill: deepskyblue;
 }
