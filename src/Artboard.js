@@ -145,7 +145,7 @@ export default function Artboard() {
     var asphaltForward = asphaltElements.forward;
   }
 
-  console.log(objectInfo)
+  /* console.log(objectInfo) */
 
   return (
     // touch-action ensures that chrome doesnt stop the drag after a few frames,
