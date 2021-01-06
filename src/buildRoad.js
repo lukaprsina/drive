@@ -69,7 +69,7 @@ export function makeAsphalt({
 function SvgGroup({ accept, onDrop, indexRoad, children, side }) {
   const [, dropBind] = useDrop({
     accept,
-    drop: side === "forward" ? (item) => onDrop(item, indexRoad) : null,
+    drop: side === "forward" ? (item) => onDrop(item.id, indexRoad) : null,
   });
 
   return <g ref={dropBind}>{children}</g>;
@@ -79,7 +79,7 @@ function Asphalt({ string, indexLane, indexRoad, accept, onDrop, side }) {
   const [, dropBind] = useDrop({
     accept,
     drop:
-      side === "forward" ? (item) => onDrop(item, indexRoad, indexLane) : null,
+      side === "forward" ? (item) => onDrop(item.id, indexRoad, indexLane) : null,
   });
 
   return <path ref={dropBind} d={string} key={indexLane} className="asphalt" />;

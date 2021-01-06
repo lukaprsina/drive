@@ -190,7 +190,7 @@ export default function Artboard() {
       newObjectInfo[indexRoad].cars[indexLane] = [];
     }
 
-    newObjectInfo[indexRoad].cars[indexLane].push(item.id);
+    newObjectInfo[indexRoad].cars[indexLane].push(item);
     setObjectInfo(newObjectInfo);
   }
 
@@ -201,7 +201,7 @@ export default function Artboard() {
       newObjectInfo[indexRoad].signs = [];
     }
 
-    newObjectInfo[indexRoad].signs.push(item.id);
+    newObjectInfo[indexRoad].signs.push(item);
     setObjectInfo(newObjectInfo);
   }
 

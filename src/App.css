@@ -96,3 +96,10 @@ body {
 .car {
   fill: deepskyblue;
 }
+
+.car-number {
+  fill: black;
+  font-weight: bold;
+  position: relative;
+  transform: translate(-4px, 5px);
+}
