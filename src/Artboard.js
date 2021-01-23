@@ -183,6 +183,12 @@ export default function Artboard() {
     { cars: [], signs: [] },
   ]);
 
+  class Car {
+    getOffset() {
+      return {x:0, y:0}
+    }
+  }
+
   function handleCarDrop(item, indexRoad, indexLane) {
     const newObjectInfo = _.cloneDeep(objectInfo);
 
@@ -190,7 +196,7 @@ export default function Artboard() {
       newObjectInfo[indexRoad].cars[indexLane] = [];
     }
 
-    newObjectInfo[indexRoad].cars[indexLane].push(item);
+    newObjectInfo[indexRoad].cars[indexLane].push(new Car());
     setObjectInfo(newObjectInfo);
   }
 
@@ -205,18 +211,13 @@ export default function Artboard() {
     setObjectInfo(newObjectInfo);
   }
 
-  const asphaltElements = makeAsphalt({
+  const asphalt = makeAsphalt({
     points,
     coordInfo,
     handleSignDrop,
     handleCarDrop,
     vectors,
   });
-
-  if (asphaltElements) {
-    var asphaltBackward = asphaltElements.backward;
-    var asphaltForward = asphaltElements.forward;
-  }
 
   return (
     // touch-action ensures that chrome doesnt stop the drag after a few frames,
@@ -226,8 +227,8 @@ export default function Artboard() {
     <div style={{ touchAction: "none" }}>
       <svg className="artboard" ref={artboardRef}>
         <g>
-          {asphaltBackward}
-          {asphaltForward}
+          {asphalt?.backward}
+          {asphalt?.forward}
         </g>
         <Center points={points} coordInfo={coordInfo} vectors={vectors} />
         <Curb points={points} coordInfo={coordInfo} vectors={vectors} />

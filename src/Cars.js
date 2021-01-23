@@ -21,6 +21,8 @@ export default function Cars({ objectInfo, points, coordInfo }) {
               number: lane.length,
             });
           }
+
+          // draw number
           for (const [indexCar, car] of lane.entries()) {
             if (indexCar < 5) {
               carPosition = sumVector(
@@ -28,10 +30,10 @@ export default function Cars({ objectInfo, points, coordInfo }) {
                   points[indexRoad].forward[indexLane].first,
                   coordInfo
                 ),
-                lenDeg(
+                sumVector(lenDeg(
                   coordInfo.roadWidth * (indexCar + 0.5),
                   points[indexRoad].angle
-                )
+                ), car.getOffset())
               );
             }
 

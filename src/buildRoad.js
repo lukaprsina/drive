@@ -48,14 +48,23 @@ export function makeAsphalt({
           side={side}
           onDrop={(item) => handleSignDrop(item, indexRoad)}
         >
-          {strings[side].map((string, index) => (
-            <Asphalt
+          {strings.forward.map((string, index) => (
+            <AsphaltForward
               string={string}
               indexLane={index}
               indexRoad={indexRoad}
               accept={["car"]}
               side={side}
               onDrop={(item) => handleCarDrop(item, indexRoad, index)}
+              key={index}
+            />
+          ))}
+
+          {strings.backward.map((string, index) => (
+            <AsphaltBackward
+              string={string}
+              indexLane={index}
+              indexRoad={indexRoad}
               key={index}
             />
           ))}
@@ -66,23 +75,26 @@ export function makeAsphalt({
   return elements;
 }
 
-function SvgGroup({ accept, onDrop, indexRoad, children, side }) {
+function SvgGroup({ accept, onDrop, indexRoad, children }) {
   const [, dropBind] = useDrop({
     accept,
-    drop: side === "forward" ? (item) => onDrop(item.id, indexRoad) : null,
+    drop: (item) => onDrop(item.id, indexRoad),
   });
 
   return <g ref={dropBind}>{children}</g>;
 }
 
-function Asphalt({ string, indexLane, indexRoad, accept, onDrop, side }) {
+function AsphaltForward({ string, indexLane, indexRoad, accept, onDrop }) {
   const [, dropBind] = useDrop({
     accept,
-    drop:
-      side === "forward" ? (item) => onDrop(item.id, indexRoad, indexLane) : null,
+    drop: (item) => onDrop(item.id, indexRoad, indexLane),
   });
 
   return <path ref={dropBind} d={string} key={indexLane} className="asphalt" />;
+}
+
+function AsphaltBackward({ string, indexLane }) {
+  return <path d={string} key={indexLane} className="asphalt" />;
 }
 
 export function Debug({ points, coordInfo, disabled = false, vectors }) {
@@ -228,7 +240,8 @@ export function RotateControl({
   points,
   coordInfo,
   rotateBind,
-  disabled = false, vectors
+  disabled = false,
+  vectors,
 }) {
   if (!(points && coordInfo && rotateBind && !disabled)) {
     return null;
@@ -259,7 +272,13 @@ export function RotateControl({
   return <g>{rotate.elements}</g>;
 }
 
-export function LaneControl({ points, coordInfo, addLanes, disabled = false, vectors }) {
+export function LaneControl({
+  points,
+  coordInfo,
+  addLanes,
+  disabled = false,
+  vectors,
+}) {
   if (!(points && coordInfo && !disabled)) {
     return null;
   }
