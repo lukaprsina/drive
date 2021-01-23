@@ -176,13 +176,6 @@ export default function Artboard() {
   /* get a list of all the road points */
   const points = calculatePoints(roadInfo, coordInfo);
 
-  const [objectInfo, setObjectInfo] = useState([
-    { cars: [], signs: [] },
-    { cars: [], signs: [] },
-    { cars: [], signs: [] },
-    { cars: [], signs: [] },
-  ]);
-
   class Car {
     getOffset() {
       return {x:0, y:0}
@@ -190,25 +183,25 @@ export default function Artboard() {
   }
 
   function handleCarDrop(item, indexRoad, indexLane) {
-    const newObjectInfo = _.cloneDeep(objectInfo);
+    const newPointInfo = _.cloneDeep(points);
 
-    if (!newObjectInfo[indexRoad].cars[indexLane]) {
-      newObjectInfo[indexRoad].cars[indexLane] = [];
+    if (!newPointInfo[indexRoad].cars[indexLane]) {
+      newPointInfo[indexRoad].cars[indexLane] = [];
     }
 
-    newObjectInfo[indexRoad].cars[indexLane].push(new Car());
-    setObjectInfo(newObjectInfo);
+    newPointInfo[indexRoad].cars[indexLane].push(new Car());
+    setObjectInfo(newPointInfo);
   }
 
   function handleSignDrop(item, indexRoad) {
-    const newObjectInfo = _.cloneDeep(objectInfo);
+    const newPointsInfo = _.cloneDeep(points);
 
-    if (!newObjectInfo[indexRoad].signs) {
-      newObjectInfo[indexRoad].signs = [];
+    if (!newPointsInfo[indexRoad].signs) {
+      newPointsInfo[indexRoad].signs = [];
     }
 
-    newObjectInfo[indexRoad].signs.push(item);
-    setObjectInfo(newObjectInfo);
+    newPointsInfo[indexRoad].signs.push(item);
+    setObjectInfo(newPointsInfo);
   }
 
   const asphalt = makeAsphalt({
@@ -258,7 +251,6 @@ export default function Artboard() {
           vectors={vectors}
         />
         <Cars
-          objectInfo={objectInfo}
           coordInfo={coordInfo}
           points={points}
         />
