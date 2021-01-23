@@ -1,11 +1,12 @@
 import React from "react";
 import { sumVector, lenDeg } from "./Artboard";
 
-export default function Cars({ objectInfo, points, coordInfo }) {
+export default function Cars({ points, coordInfo }) {
+  console.log({ points, coordInfo })
   const cars = { strings: [], numbers: [] };
   let carPosition = {};
 
-  for (const [indexRoad, road] of objectInfo.entries()) {
+  for (const [indexRoad, road] of points.entries()) {
     if (road.cars.length !== 0) {
       for (const [indexLane, lane] of road.cars.entries()) {
         if (lane) {
